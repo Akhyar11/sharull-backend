@@ -21,15 +21,8 @@ class Server {
     this.app.use("/api", Route);
   }
 
-  public start(): void {
-    const PORT = process.env.PORT || 3000;
-    this.app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
-    });
-  }
-
   private defaultRoute(req: Request, res: Response) {
-    res.json({ message: "Welcome to the API!, Sistem for KATS" });
+    res.send("Welcome to the API!, Sistem for KATS");
   }
 
   public getApp(): Application {
