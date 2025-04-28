@@ -6,8 +6,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "npx tsc && node dist/main.js",
     "start-dev": "npx tsc && node dist/main-development.js",
-    "dev": "npx nodemon --exec ts-node main-development",
-    "build": "npm i && tsc"
+    "dev": "npx nodemon --exec ts-node main-development.ts",
+    "build": "tsc"
   },
   "keywords": [],
   "author": "Syarull",
