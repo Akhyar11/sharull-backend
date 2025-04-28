@@ -1,4 +1,4 @@
-import express, { Application } from "express";
+import express, { Application, Request, Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import Route from "./src/routes/api.ts";
@@ -17,6 +17,7 @@ class Server {
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
 
+    this.app.get("/", this.defaultRoute);
     this.app.use("/api", Route);
   }
 
@@ -25,6 +26,10 @@ class Server {
     this.app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
     });
+  }
+
+  private defaultRoute(req: Request, res: Response) {
+    res.json({ message: "Welcome to the API!, Sistem for KATS" });
   }
 
   public getApp(): Application {

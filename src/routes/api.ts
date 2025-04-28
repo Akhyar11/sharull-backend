@@ -18,7 +18,6 @@ class Route {
   }
 
   private initializeRoutes() {
-    this.router.get("/", this.defaultRoute);
     this.router.post("/login", authController.login);
 
     this.adminGroup();
@@ -74,10 +73,6 @@ class Route {
     adminRouter.delete("/invoices/:id", invoiceController.delete);
 
     this.router.use("/admin", adminRouter);
-  }
-
-  private defaultRoute(req: Request, res: Response) {
-    res.json({ message: "Welcome to the API!, Sistem for KATS" });
   }
 }
 
