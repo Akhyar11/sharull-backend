@@ -1,6 +1,6 @@
-import { Schema } from "../../firebaseORM/assets/type.ts";
-import FirebaseService from "../../firebaseORM/FirebaseService.ts";
-import { packageScheduleModel } from "./packageSchedules.ts";
+import { Schema } from "../../firebaseORM/assets/type";
+import FirebaseService from "../../firebaseORM/FirebaseService";
+import { packageScheduleModel } from "./packageSchedules";
 
 export interface IFleet {
   id?: string;

@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { invoiceModel, IInvoice } from "../models/invoices.ts";
-import { OrderBy, Where } from "../../firebaseORM/assets/type.ts";
+import { invoiceModel, IInvoice } from "../models/invoices";
+import { OrderBy, Where } from "../../firebaseORM/assets/type";
 
 class InvoiceController {
   /**

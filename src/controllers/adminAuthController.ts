@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { userModel } from "../models/users.ts"; // Pastikan path-nya benar
+import { userModel } from "../models/users"; // Pastikan path-nya benar
 import dotenv from "dotenv";
 
 dotenv.config();

@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { fleetModel, IFleet } from "../models/fleets.ts";
-import { OrderBy, Where } from "../../firebaseORM/assets/type.ts";
+import { fleetModel, IFleet } from "../models/fleets";
+import { OrderBy, Where } from "../../firebaseORM/assets/type";
 
 class FleetController {
   async list(req: Request, res: Response): Promise<void> {

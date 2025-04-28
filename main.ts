@@ -1,7 +1,7 @@
 import express, { Application, Request, Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import Route from "./src/routes/api.ts";
+import Route from "./src/routes/api";
 
 class Server {
   private app: Application;

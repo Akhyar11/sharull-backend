@@ -1,13 +1,13 @@
 import { Router, Request, Response } from "express";
-import { userController } from "../controllers/usersController.ts";
-import { authController } from "../controllers/adminAuthController.ts";
-import { adminAuthMiddleware } from "../middlewares/adminMiddleware.ts";
-import { packageController } from "../controllers/packagesController.ts";
-import { bookingController } from "../controllers/bookingsControllers.ts";
-import { paymentController } from "../controllers/paymentsControllers.ts";
-import { invoiceController } from "../controllers/invoicesControllers.ts";
-import { packageScheduleController } from "../controllers/packageSchedules.ts";
-import { fleetController } from "../controllers/fleetsController.ts";
+import { userController } from "../controllers/usersController";
+import { authController } from "../controllers/adminAuthController";
+import { adminAuthMiddleware } from "../middlewares/adminMiddleware";
+import { packageController } from "../controllers/packagesController";
+import { bookingController } from "../controllers/bookingsControllers";
+import { paymentController } from "../controllers/paymentsControllers";
+import { invoiceController } from "../controllers/invoicesControllers";
+import { packageScheduleController } from "../controllers/packageSchedules";
+import { fleetController } from "../controllers/fleetsController";
 
 class Route {
   public router: Router;

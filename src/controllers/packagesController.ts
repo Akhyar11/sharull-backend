@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { packageModel, IPackage } from "../models/packages.ts";
-import { OrderBy, Where } from "../../firebaseORM/assets/type.ts";
+import { packageModel, IPackage } from "../models/packages";
+import { OrderBy, Where } from "../../firebaseORM/assets/type";
 
 class PackageController {
   async list(req: Request, res: Response): Promise<void> {

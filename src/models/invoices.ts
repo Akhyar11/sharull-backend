@@ -1,5 +1,5 @@
-import { Schema } from "../../firebaseORM/assets/type.ts";
-import FirebaseAdminService from "../../firebaseORM/FirebaseService.ts";
+import { Schema } from "../../firebaseORM/assets/type";
+import FirebaseAdminService from "../../firebaseORM/FirebaseService";
 
 export interface IInvoice {
   booking_id: string;

@@ -6,7 +6,7 @@ import {
 } from "./assets/type";
 import * as admin from "firebase-admin";
 import dotenv from "dotenv";
-import { db, rtdb } from "./FirebaseAdmin.ts";
+import { db, rtdb } from "./FirebaseAdmin";
 
 dotenv.config();
 

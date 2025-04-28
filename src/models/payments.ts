@@ -1,5 +1,5 @@
-import { Schema } from "../../firebaseORM/assets/type.ts";
-import FirebaseService from "../../firebaseORM/FirebaseService.ts";
+import { Schema } from "../../firebaseORM/assets/type";
+import FirebaseService from "../../firebaseORM/FirebaseService";
 
 export interface IPayment {
   booking_id: string;

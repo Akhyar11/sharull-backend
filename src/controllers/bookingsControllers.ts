@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { bookingModel, IBooking } from "../models/bookings.ts";
-import { OrderBy, Where } from "../../firebaseORM/assets/type.ts";
+import { bookingModel, IBooking } from "../models/bookings";
+import { OrderBy, Where } from "../../firebaseORM/assets/type";
 
 class BookingController {
   async list(req: Request, res: Response): Promise<void> {

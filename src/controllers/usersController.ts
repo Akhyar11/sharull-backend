@@ -1,5 +1,5 @@
-import { OrderBy, Where } from "../../firebaseORM/assets/type.ts";
-import { userModel, IUser } from "../models/users.ts";
+import { OrderBy, Where } from "../../firebaseORM/assets/type";
+import { userModel, IUser } from "../models/users";
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 

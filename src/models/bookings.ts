@@ -1,7 +1,7 @@
-import { Schema } from "../../firebaseORM/assets/type.ts";
-import FirebaseService from "../../firebaseORM/FirebaseService.ts";
-import { invoiceModel } from "./invoices.ts";
-import { paymentModel } from "./payments.ts";
+import { Schema } from "../../firebaseORM/assets/type";
+import FirebaseService from "../../firebaseORM/FirebaseService";
+import { invoiceModel } from "./invoices";
+import { paymentModel } from "./payments";
 
 export interface IBooking {
   id?: string;

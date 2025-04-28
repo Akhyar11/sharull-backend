@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { paymentModel, IPayment } from "../models/payments.ts";
-import { OrderBy, Where } from "../../firebaseORM/assets/type.ts";
+import { paymentModel, IPayment } from "../models/payments";
+import { OrderBy, Where } from "../../firebaseORM/assets/type";
 
 class PaymentController {
   async list(req: Request, res: Response): Promise<void> {

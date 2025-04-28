@@ -1,7 +1,7 @@
-import { Schema } from "../../firebaseORM/assets/type.ts";
-import FirebaseService from "../../firebaseORM/FirebaseService.ts";
-import { bookingModel } from "./bookings.ts";
-import { packageScheduleModel } from "./packageSchedules.ts";
+import { Schema } from "../../firebaseORM/assets/type";
+import FirebaseService from "../../firebaseORM/FirebaseService";
+import { bookingModel } from "./bookings";
+import { packageScheduleModel } from "./packageSchedules";
 
 export interface IPackage {
   name: string;

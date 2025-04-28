@@ -2,8 +2,8 @@ import { Request, Response } from "express";
 import {
   packageScheduleModel,
   IPackageSchedule,
-} from "../models/packageSchedules.ts";
-import { OrderBy, Where } from "../../firebaseORM/assets/type.ts";
+} from "../models/packageSchedules";
+import { OrderBy, Where } from "../../firebaseORM/assets/type";
 
 class PackageScheduleController {
   async list(req: Request, res: Response): Promise<void> {
