@@ -8,6 +8,8 @@ import { paymentController } from "../controllers/paymentsControllers";
 import { invoiceController } from "../controllers/invoicesControllers";
 import { packageScheduleController } from "../controllers/packageSchedules";
 import { fleetController } from "../controllers/fleetsController";
+import { imageController } from "../controllers/imageController";
+import { destinationController } from "../controllers/destinationController";
 
 class Route {
   public router: Router;
@@ -19,6 +21,8 @@ class Route {
 
   private initializeRoutes() {
     this.router.post("/login", authController.login);
+    this.router.get("/file-proxy/:id", imageController.listById);
+    this.router.get("/file-proxy/fk/:id", imageController.listByFK);
 
     this.adminGroup();
   }
@@ -32,6 +36,12 @@ class Route {
     adminRouter.post("/users", userController.store);
     adminRouter.put("/users/:id", userController.update);
     adminRouter.delete("/users/:id", userController.delete);
+
+    // Destination
+    adminRouter.get("/destination/list", destinationController.list);
+    adminRouter.post("/destination", destinationController.store);
+    adminRouter.put("/destination/:id", destinationController.update);
+    adminRouter.delete("/destination/:id", destinationController.delete);
 
     // Packages
     adminRouter.get("/packages/list", packageController.list);

@@ -10,7 +10,7 @@ class PackageController {
         limit,
         id,
         name,
-        destination,
+        destination_id,
         orderBy = "name_asc",
       } = req.query;
 
@@ -18,11 +18,11 @@ class PackageController {
 
       if (id) filters.push({ field: "id", operator: "==", value: id });
       if (name) filters.push({ field: "name", operator: "in", value: name });
-      if (destination)
+      if (destination_id)
         filters.push({
-          field: "destination",
+          field: "destination_id",
           operator: "in",
-          value: destination,
+          value: destination_id,
         });
 
       const orderByOptions: OrderBy = {
@@ -59,17 +59,9 @@ class PackageController {
 
   async store(req: Request, res: Response): Promise<void> {
     try {
-      const {
-        name,
-        description,
-        destination,
-        price,
-        available_seats,
-        start_date,
-        end_date,
-      } = req.body;
+      const { name, description, destination_id, price } = req.body;
 
-      if (!name || !description || !destination || !price) {
+      if (!name || !description || !price) {
         res.status(400).json({ msg: "All fields are required" });
         return;
       }
@@ -77,7 +69,7 @@ class PackageController {
       const newPackage: IPackage = {
         name,
         description,
-        destination,
+        destination_id: destination_id || "",
         price: parseFloat(price),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -95,7 +87,7 @@ class PackageController {
   async update(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const { name, description, destination, price } = req.body;
+      const { name, description, destination_id, price } = req.body;
 
       const packages = await packageModel.search("id", "==", id);
 
@@ -107,8 +99,8 @@ class PackageController {
       const updatedPackage: IPackage = {
         ...packages[0],
         name: name || packages[0].name,
+        destination_id: destination_id || packages[0].destination_id,
         description: description || packages[0].description,
-        destination: destination || packages[0].destination,
         price: price !== undefined ? parseFloat(price) : packages[0].price,
         updated_at: new Date().toISOString(),
       };

@@ -1,9 +1,11 @@
 import { Schema } from "../../firebaseORM/assets/type";
 import FirebaseService from "../../firebaseORM/FirebaseService";
 import { bookingModel } from "./bookings";
+import { imageModel } from "./images";
 
 export interface IUser {
   name: string;
+  image_id: string;
   email: string;
   password: string;
   phone: string;
@@ -13,6 +15,7 @@ export interface IUser {
 
 export const UserSchema: Schema = {
   name: "string",
+  image_id: "string",
   email: "string",
   password: "string",
   phone: "string",
@@ -25,6 +28,13 @@ userModel.setRelation("bookings", {
   model: bookingModel,
   type: "one-to-many",
   foreignKey: "user_id",
+  localKey: "id",
+});
+
+userModel.setRelation("image", {
+  model: imageModel,
+  type: "one-to-many",
+  foreignKey: "FK",
   localKey: "id",
 });
 

@@ -5,16 +5,16 @@ import { packageScheduleModel } from "./packageSchedules";
 
 export interface IPackage {
   name: string;
+  destination_id: string;
   description: string;
-  destination: string;
   price: number;
   [key: string]: any;
 }
 
 export const PackageSchema: Schema = {
   name: "string",
+  destination_id: "string",
   description: "string",
-  destination: "string",
   price: "number",
 };
 

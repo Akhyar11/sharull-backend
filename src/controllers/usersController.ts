@@ -2,6 +2,7 @@ import { OrderBy, Where } from "../../firebaseORM/assets/type";
 import { userModel, IUser } from "../models/users";
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
+import { createImage } from "./imageController";
 
 class UserController {
   async list(req: Request, res: Response) {
@@ -98,6 +99,7 @@ class UserController {
 
       const newUser: IUser = {
         name,
+        image_id: "",
         email,
         password: bcrypt.hashSync(password, 10),
         phone,
@@ -116,13 +118,17 @@ class UserController {
   async update(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const { name, email, password, phone, role } = req.body;
+      const { name, email, password, phone, role, image } = req.body;
 
       const users = await userModel.search("id", "==", id);
 
       if (!users[0]) {
         res.status(404).json({ msg: "User not found" });
         return;
+      }
+
+      if (image) {
+        await createImage(image as string, id);
       }
 
       const newPassword = password
