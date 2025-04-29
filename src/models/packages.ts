@@ -8,9 +8,6 @@ export interface IPackage {
   description: string;
   destination: string;
   price: number;
-  available_seats: number;
-  start_date: string;
-  end_date: string;
   [key: string]: any;
 }
 
@@ -19,9 +16,6 @@ export const PackageSchema: Schema = {
   description: "string",
   destination: "string",
   price: "number",
-  available_seats: "number",
-  start_date: "string",
-  end_date: "string",
 };
 
 const packageModel = new FirebaseService("packages", PackageSchema);

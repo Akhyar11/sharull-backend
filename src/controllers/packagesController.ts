@@ -69,15 +69,7 @@ class PackageController {
         end_date,
       } = req.body;
 
-      if (
-        !name ||
-        !description ||
-        !destination ||
-        !price ||
-        !available_seats ||
-        !start_date ||
-        !end_date
-      ) {
+      if (!name || !description || !destination || !price) {
         res.status(400).json({ msg: "All fields are required" });
         return;
       }
@@ -87,9 +79,6 @@ class PackageController {
         description,
         destination,
         price: parseFloat(price),
-        available_seats: parseInt(available_seats),
-        start_date,
-        end_date,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
@@ -106,15 +95,7 @@ class PackageController {
   async update(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const {
-        name,
-        description,
-        destination,
-        price,
-        available_seats,
-        start_date,
-        end_date,
-      } = req.body;
+      const { name, description, destination, price } = req.body;
 
       const packages = await packageModel.search("id", "==", id);
 
@@ -129,12 +110,6 @@ class PackageController {
         description: description || packages[0].description,
         destination: destination || packages[0].destination,
         price: price !== undefined ? parseFloat(price) : packages[0].price,
-        available_seats:
-          available_seats !== undefined
-            ? parseInt(available_seats)
-            : packages[0].available_seats,
-        start_date: start_date || packages[0].start_date,
-        end_date: end_date || packages[0].end_date,
         updated_at: new Date().toISOString(),
       };
 
