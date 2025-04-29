@@ -30,7 +30,7 @@ class InvoiceController {
       if (invoice_number)
         filters.push({
           field: "invoice_number",
-          operator: "==",
+          operator: "in",
           value: invoice_number,
         });
       if (status)

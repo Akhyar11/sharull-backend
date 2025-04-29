@@ -23,13 +23,13 @@ class UserController {
         filters.push({ field: "id", operator: "==", value: id });
       }
       if (name) {
-        filters.push({ field: "name", operator: "==", value: name });
+        filters.push({ field: "name", operator: "in", value: name });
       }
       if (email) {
-        filters.push({ field: "email", operator: "==", value: email });
+        filters.push({ field: "email", operator: "in", value: email });
       }
       if (phone) {
-        filters.push({ field: "phone", operator: "==", value: phone });
+        filters.push({ field: "phone", operator: "in", value: phone });
       }
       if (role) {
         filters.push({ field: "role", operator: "==", value: role });

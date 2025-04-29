@@ -546,7 +546,7 @@ class FirebaseAdminService {
           case "<=":
             return item[field] <= value;
           case "in":
-            return Array.isArray(value) ? value.includes(item[field]) : false;
+            return item[field].toLowerCase().includes(value.toLowerCase());
           case "array-contains":
             return Array.isArray(item[field])
               ? item[field].includes(value)

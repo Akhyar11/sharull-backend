@@ -17,11 +17,11 @@ class PackageController {
       const filters: Where[] = [];
 
       if (id) filters.push({ field: "id", operator: "==", value: id });
-      if (name) filters.push({ field: "name", operator: "==", value: name });
+      if (name) filters.push({ field: "name", operator: "in", value: name });
       if (destination)
         filters.push({
           field: "destination",
-          operator: "==",
+          operator: "in",
           value: destination,
         });
 

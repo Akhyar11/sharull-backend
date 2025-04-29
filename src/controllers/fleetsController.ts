@@ -18,7 +18,7 @@ class FleetController {
       const filters: Where[] = [];
 
       if (id) filters.push({ field: "id", operator: "==", value: id });
-      if (name) filters.push({ field: "name", operator: "==", value: name });
+      if (name) filters.push({ field: "name", operator: "in", value: name });
       if (type) filters.push({ field: "type", operator: "==", value: type });
       if (status)
         filters.push({ field: "status", operator: "==", value: status });
