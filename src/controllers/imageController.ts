@@ -3,9 +3,7 @@ import { Request, Response } from "express";
 
 export const getImageById = async (id: string) => {
   const image: IImage[] = await imageModel.search("id", "==", id);
-  if (image[0]) {
-    return image[0].image_base64;
-  }
+  return image[0];
 };
 
 export const getImageByFK = async (id: string) => {
@@ -18,24 +16,72 @@ export const createImage = async (image_base64: string, FK?: string) => {
 };
 
 class ImageController {
+  // Kirim langsung file gambar
   async listById(req: Request, res: Response) {
     try {
       const { id } = req.query;
 
-      const images = getImageById(id as string);
+      const imageData = await getImageById(id as string);
 
-      res.status(200).json({ images });
+      if (!imageData) {
+        res.status(404).json({ msg: "Image not found" });
+        return;
+      }
+
+      const base64Data = imageData.image_base64;
+      const matches = base64Data.match(/^data:(image\/\w+);base64,(.+)$/);
+
+      if (!matches || matches.length !== 3) {
+        res.status(400).json({ msg: "Invalid base64 image format" });
+        return;
+      }
+
+      const mimeType = matches[1];
+      const imageBuffer = Buffer.from(matches[2], "base64");
+
+      res.setHeader("Content-Type", mimeType);
+      res.send(imageBuffer);
     } catch (error) {
       res.status(500).json({ msg: "Failed to fetch image" });
     }
   }
+
+  async listByFKSingel(req: Request, res: Response) {
+    try {
+      const { id } = req.query;
+
+      const images = await getImageByFK(id as string);
+
+      if (!images[0]) {
+        res.status(404).json({ msg: "Image not found" });
+        return;
+      }
+
+      const base64Data = images[0].image_base64;
+      const matches = base64Data.match(/^data:(image\/\w+);base64,(.+)$/);
+
+      if (!matches || matches.length !== 3) {
+        res.status(400).json({ msg: "Invalid base64 image format" });
+        return;
+      }
+
+      const mimeType = matches[1];
+      const imageBuffer = Buffer.from(matches[2], "base64");
+
+      res.setHeader("Content-Type", mimeType);
+      res.send(imageBuffer);
+    } catch (error) {
+      res.status(500).json({ msg: "Failed to fetch image" });
+    }
+  }
+
   async listByFK(req: Request, res: Response) {
     try {
       const { id } = req.query;
 
-      const image = getImageByFK(id as string);
+      const images = await getImageByFK(id as string);
 
-      res.status(200).json({ image });
+      res.status(200).json({ images });
     } catch (error) {
       res.status(500).json({ msg: "Failed to fetch image" });
     }

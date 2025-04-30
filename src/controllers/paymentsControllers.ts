@@ -10,7 +10,8 @@ class PaymentController {
         limit,
         id,
         booking_id,
-        payment_method,
+        payment_method_id,
+        status,
         orderBy = "payment_date_desc",
       } = req.query;
 
@@ -23,12 +24,14 @@ class PaymentController {
           operator: "==",
           value: booking_id,
         });
-      if (payment_method)
+      if (payment_method_id)
         filters.push({
-          field: "payment_method",
+          field: "payment_method_id",
           operator: "==",
-          value: payment_method,
+          value: payment_method_id,
         });
+      if (status)
+        filters.push({ field: "status", operator: "==", value: status });
 
       const orderByOptions: OrderBy = {
         field: (orderBy as string).split("_")[0],
@@ -43,16 +46,10 @@ class PaymentController {
       const pageNumber = parseInt(page as string) || 1;
       const limitNumber = parseInt(limit as string) || 10;
       const startIndex = (pageNumber - 1) * limitNumber;
-      const endIndex = startIndex + limitNumber;
-      const paginatedPayments = payments.slice(startIndex, endIndex);
-
-      const data = paginatedPayments.map((payment, index) => ({
-        no: index + 1 + startIndex,
-        ...payment,
-      }));
+      const paginated = payments.slice(startIndex, startIndex + limitNumber);
 
       res.status(200).json({
-        list: data,
+        list: paginated.map((p, i) => ({ no: i + 1 + startIndex, ...p })),
         total: payments.length,
         page: pageNumber,
         limit: limitNumber,
@@ -67,7 +64,7 @@ class PaymentController {
       const {
         booking_id,
         payment_date,
-        payment_method,
+        payment_method_id,
         payment_amount,
         payment_proof,
       } = req.body;
@@ -75,7 +72,7 @@ class PaymentController {
       if (
         !booking_id ||
         !payment_date ||
-        !payment_method ||
+        !payment_method_id ||
         !payment_amount ||
         !payment_proof
       ) {
@@ -85,11 +82,12 @@ class PaymentController {
 
       const newPayment: IPayment = {
         booking_id,
+        payment_method_id,
         payment_date,
-        payment_method,
         payment_amount: parseFloat(payment_amount),
         payment_proof,
-        created_at: new Date().toISOString(),
+        status: "pending",
+        is_approved: false,
       };
 
       await paymentModel.create(newPayment);
@@ -107,29 +105,31 @@ class PaymentController {
       const {
         booking_id,
         payment_date,
-        payment_method,
+        payment_method_id,
         payment_amount,
         payment_proof,
+        status,
       } = req.body;
 
       const payments = await paymentModel.search("id", "==", id);
+      const payment = payments[0];
 
-      if (!payments[0]) {
+      if (!payment) {
         res.status(404).json({ msg: "Payment not found" });
         return;
       }
 
       const updatedPayment: IPayment = {
-        ...payments[0],
-        booking_id: booking_id || payments[0].booking_id,
-        payment_date: payment_date || payments[0].payment_date,
-        payment_method: payment_method || payments[0].payment_method,
+        ...payment,
+        booking_id: booking_id || payment.booking_id,
+        payment_date: payment_date || payment.payment_date,
+        payment_method_id: payment_method_id || payment.payment_method_id,
         payment_amount:
           payment_amount !== undefined
             ? parseFloat(payment_amount)
-            : payments[0].payment_amount,
-        payment_proof: payment_proof || payments[0].payment_proof,
-        created_at: payments[0].created_at,
+            : payment.payment_amount,
+        payment_proof: payment_proof || payment.payment_proof,
+        status: status || payment.status,
       };
 
       await paymentModel.update(id, updatedPayment);
@@ -144,7 +144,6 @@ class PaymentController {
   async delete(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-
       const payments = await paymentModel.search("id", "==", id);
 
       if (!payments[0]) {
@@ -156,6 +155,46 @@ class PaymentController {
       res.status(200).json({ msg: "Payment deleted successfully" });
     } catch (error) {
       res.status(500).json({ msg: "Failed to delete payment" });
+    }
+  }
+
+  async approve(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { admin_id, approved } = req.body;
+
+      if (!admin_id || approved === undefined) {
+        res
+          .status(400)
+          .json({ msg: "admin_id and approved flag are required" });
+        return;
+      }
+
+      const payments = await paymentModel.search("id", "==", id);
+      const payment = payments[0];
+
+      if (!payment) {
+        res.status(404).json({ msg: "Payment not found" });
+        return;
+      }
+
+      const now = new Date().toISOString();
+
+      const updated: IPayment = {
+        ...payment,
+        status: approved ? "approved" : "rejected",
+        is_approved: approved,
+        approved_by: admin_id,
+        approved_at: now,
+      };
+
+      await paymentModel.update(id, updated);
+      res.status(200).json({
+        msg: `Payment ${approved ? "approved" : "rejected"}`,
+        data: updated,
+      });
+    } catch (error) {
+      res.status(500).json({ msg: "Failed to approve payment" });
     }
   }
 }

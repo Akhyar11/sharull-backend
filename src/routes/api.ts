@@ -1,4 +1,4 @@
-import { Router, Request, Response } from "express";
+import { Router } from "express";
 import { userController } from "../controllers/usersController";
 import { authController } from "../controllers/adminAuthController";
 import { adminAuthMiddleware } from "../middlewares/adminMiddleware";
@@ -10,6 +10,7 @@ import { packageScheduleController } from "../controllers/packageSchedules";
 import { fleetController } from "../controllers/fleetsController";
 import { imageController } from "../controllers/imageController";
 import { destinationController } from "../controllers/destinationController";
+import { paymentMethodController } from "../controllers/paymentMetodeController";
 
 class Route {
   public router: Router;
@@ -23,6 +24,10 @@ class Route {
     this.router.post("/login", authController.login);
     this.router.get("/file-proxy/:id", imageController.listById);
     this.router.get("/file-proxy/fk/:id", imageController.listByFK);
+    this.router.get(
+      "/file-proxy/fk/singel/:id",
+      imageController.listByFKSingel
+    );
 
     this.adminGroup();
   }
@@ -69,6 +74,12 @@ class Route {
     adminRouter.post("/bookings", bookingController.store);
     adminRouter.put("/bookings/:id", bookingController.update);
     adminRouter.delete("/bookings/:id", bookingController.delete);
+
+    // Payment Metodes
+    adminRouter.get("/paymentmetodes/list", paymentMethodController.list);
+    adminRouter.post("/paymentmetodes", paymentMethodController.store);
+    adminRouter.put("/paymentmetodes/:id", paymentMethodController.update);
+    adminRouter.delete("/paymentmetodes/:id", paymentMethodController.delete);
 
     // Payments
     adminRouter.get("/payments/list", paymentController.list);
