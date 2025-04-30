@@ -19,9 +19,11 @@ class ImageController {
   // Kirim langsung file gambar
   async listById(req: Request, res: Response) {
     try {
-      const { id } = req.query;
+      const { id } = req.params;
 
       const imageData = await getImageById(id as string);
+
+      console.log({ id });
 
       if (!imageData) {
         res.status(404).json({ msg: "Image not found" });
@@ -48,7 +50,7 @@ class ImageController {
 
   async listByFKSingel(req: Request, res: Response) {
     try {
-      const { id } = req.query;
+      const { id } = req.params;
 
       const images = await getImageByFK(id as string);
 
@@ -77,7 +79,7 @@ class ImageController {
 
   async listByFK(req: Request, res: Response) {
     try {
-      const { id } = req.query;
+      const { id } = req.params;
 
       const images = await getImageByFK(id as string);
 
