@@ -4,6 +4,8 @@ import {
   IPackageSchedule,
 } from "../models/packageSchedules";
 import { OrderBy, Where } from "../../firebaseORM/assets/type";
+import { packageModel } from "../models/packages";
+import { fleetModel } from "../models/fleets";
 
 class PackageScheduleController {
   async list(req: Request, res: Response): Promise<void> {
@@ -50,8 +52,12 @@ class PackageScheduleController {
       const endIndex = startIndex + limitNumber;
       const paginatedSchedules = schedules.slice(startIndex, endIndex);
 
-      const data = paginatedSchedules.map((schedule, index) => ({
+      const data = paginatedSchedules.map(async (schedule, index) => ({
         no: index + 1 + startIndex,
+        package: (
+          await packageModel.search("id", "==", schedule.package_id)
+        )[0],
+        fleet: (await fleetModel.search("id", "==", schedule.fleet_id))[0],
         ...schedule,
       }));
 
