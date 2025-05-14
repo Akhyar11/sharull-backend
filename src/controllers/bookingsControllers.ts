@@ -59,13 +59,13 @@ class BookingController {
       const dataRelation = [];
 
       for (let d of data) {
-        const user = userModel.search("id", "==", d.user_id);
-        const schedule = packageScheduleModel.search(
+        const user = await userModel.search("id", "==", d.user_id);
+        const schedule = await packageScheduleModel.search(
           "id",
           "==",
           d.package_schedule_id
         );
-        const newData = { ...d, user, schedule };
+        const newData = { ...d, user: user[0], schedule: schedule[0] };
         dataRelation.push(newData);
       }
 
