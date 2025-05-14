@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import { bookingModel, IBooking } from "../models/bookings";
 import { OrderBy, Where } from "../../firebaseORM/assets/type";
+import { userModel } from "../models/users";
+import { packageScheduleModel } from "../models/packageSchedules";
 
 class BookingController {
   async list(req: Request, res: Response): Promise<void> {
@@ -54,8 +56,21 @@ class BookingController {
         ...booking,
       }));
 
+      const dataRelation = [];
+
+      for (let d of data) {
+        const user = userModel.search("id", "==", d.user_id);
+        const schedule = packageScheduleModel.search(
+          "id",
+          "==",
+          d.package_schedule_id
+        );
+        const newData = { ...d, user, schedule };
+        dataRelation.push(newData);
+      }
+
       res.status(200).json({
-        list: data,
+        list: dataRelation,
         total: bookings.length,
         page: pageNumber,
         limit: limitNumber,
