@@ -63,6 +63,7 @@ class PackageScheduleController {
 
       res.status(200).json({
         list: data,
+        listData: paginatedSchedules,
         total: schedules.length,
         page: pageNumber,
         limit: limitNumber,
