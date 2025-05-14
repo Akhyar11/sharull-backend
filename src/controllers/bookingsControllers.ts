@@ -61,14 +61,34 @@ class BookingController {
 
       for (let d of data) {
         const user = await userModel.search("id", "==", d.user_id);
-        const schedule = (
-          await packageScheduleModel.search("id", "==", d.package_schedule_id)
-        ).map(async (d) => {
-          const pkg = await packageModel.search("id", "==", d.package_id);
-          return { ...d, package: pkg[0] };
-        });
 
-        const newData = { ...d, user: user[0], schedule: schedule[0] };
+        const scheduleResults = await packageScheduleModel.search(
+          "id",
+          "==",
+          d.package_schedule_id
+        );
+
+        let scheduleWithPackage = null;
+
+        if (scheduleResults && scheduleResults.length > 0) {
+          const pkg = await packageModel.search(
+            "id",
+            "==",
+            scheduleResults[0].package_id
+          );
+
+          scheduleWithPackage = {
+            ...scheduleResults[0],
+            package: pkg && pkg.length > 0 ? pkg[0] : null,
+          };
+        }
+
+        const newData = {
+          ...d,
+          user: user && user.length > 0 ? user[0] : null,
+          schedule: scheduleWithPackage,
+        };
+
         dataRelation.push(newData);
       }
 

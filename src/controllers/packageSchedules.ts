@@ -52,18 +52,32 @@ class PackageScheduleController {
       const endIndex = startIndex + limitNumber;
       const paginatedSchedules = schedules.slice(startIndex, endIndex);
 
-      const data = paginatedSchedules.map(async (schedule, index) => ({
-        no: index + 1 + startIndex,
-        package: (
-          await packageModel.search("id", "==", schedule.package_id)
-        )[0],
-        fleet: (await fleetModel.search("id", "==", schedule.fleet_id))[0],
-        ...schedule,
-      }));
+      const dataPromises = paginatedSchedules.map(async (schedule, index) => {
+        // Await each promise inside the map callback
+        const packageData = await packageModel.search(
+          "id",
+          "==",
+          schedule.package_id
+        );
+        const fleetData = await fleetModel.search(
+          "id",
+          "==",
+          schedule.fleet_id
+        );
+
+        // Return the complete object
+        return {
+          no: index + 1 + startIndex,
+          package: packageData[0],
+          fleet: fleetData[0],
+          ...schedule,
+        };
+      });
+
+      const data = await Promise.all(dataPromises);
 
       res.status(200).json({
         list: data,
-        listData: paginatedSchedules,
         total: schedules.length,
         page: pageNumber,
         limit: limitNumber,
