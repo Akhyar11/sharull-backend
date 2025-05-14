@@ -3,6 +3,7 @@ import { bookingModel, IBooking } from "../models/bookings";
 import { OrderBy, Where } from "../../firebaseORM/assets/type";
 import { userModel } from "../models/users";
 import { packageScheduleModel } from "../models/packageSchedules";
+import { packageModel } from "../models/packages";
 
 class BookingController {
   async list(req: Request, res: Response): Promise<void> {
@@ -60,11 +61,13 @@ class BookingController {
 
       for (let d of data) {
         const user = await userModel.search("id", "==", d.user_id);
-        const schedule = await packageScheduleModel.search(
-          "id",
-          "==",
-          d.package_schedule_id
-        );
+        const schedule = (
+          await packageScheduleModel.search("id", "==", d.package_schedule_id)
+        ).map(async (d) => {
+          const pkg = await packageModel.search("id", "==", d.package_id);
+          return { ...d, package: pkg[0] };
+        });
+
         const newData = { ...d, user: user[0], schedule: schedule[0] };
         dataRelation.push(newData);
       }
