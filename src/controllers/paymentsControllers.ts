@@ -1,6 +1,14 @@
 import { Request, Response } from "express";
 import { paymentModel, IPayment } from "../models/payments";
 import { OrderBy, Where } from "../../firebaseORM/assets/type";
+import { bookingModel, IBooking } from "../models/bookings";
+import { IUser, userModel } from "../models/users";
+import {
+  IPackageSchedule,
+  packageScheduleModel,
+} from "../models/packageSchedules";
+import { IPackage, packageModel } from "../models/packages";
+import { IPaymentMethod, paymentMethodModel } from "../models/paymentMetode";
 
 class PaymentController {
   async list(req: Request, res: Response): Promise<void> {
@@ -48,8 +56,57 @@ class PaymentController {
       const startIndex = (pageNumber - 1) * limitNumber;
       const paginated = payments.slice(startIndex, startIndex + limitNumber);
 
+      const relationData = [];
+
+      for (let payment of paginated) {
+        const bookings: IBooking[] = await bookingModel.search(
+          "id",
+          "==",
+          payment.booking_id
+        );
+        const PMethode: IPaymentMethod[] = await paymentMethodModel.search(
+          "id",
+          "==",
+          payment.payment_method_id
+        );
+        const relationDataBookings = [];
+        for (let booking of bookings) {
+          const user: IUser[] = await userModel.search(
+            "id",
+            "==",
+            booking.user_id
+          );
+          const schedule: IPackageSchedule[] =
+            await packageScheduleModel.search(
+              "id",
+              "==",
+              booking.package_schedule_id
+            );
+          const shceduleWithPackage = [];
+          for (let s of schedule) {
+            const packages: IPackage[] = await packageModel.search(
+              "id",
+              "==",
+              s.package_id
+            );
+            shceduleWithPackage.push({ ...schedule, package: packages[0] });
+          }
+          relationDataBookings.push({
+            ...booking,
+            user: user[0],
+            schedule: shceduleWithPackage[0],
+          });
+        }
+
+        relationData.push({
+          ...payment,
+          booking: relationDataBookings[0],
+          payment_method: PMethode[0],
+        });
+      }
+
       res.status(200).json({
-        list: paginated.map((p, i) => ({ no: i + 1 + startIndex, ...p })),
+        list: relationData.map((p, i) => ({ no: i + 1 + startIndex, ...p })),
         total: payments.length,
         page: pageNumber,
         limit: limitNumber,

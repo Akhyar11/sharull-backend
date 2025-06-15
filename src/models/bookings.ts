@@ -1,6 +1,7 @@
 import { Schema } from "../../firebaseORM/assets/type";
 import FirebaseService from "../../firebaseORM/FirebaseService";
 import { invoiceModel } from "./invoices";
+import { packageScheduleModel } from "./packageSchedules";
 import { paymentModel } from "./payments";
 
 export interface IBooking {
@@ -36,6 +37,13 @@ bookingModel.setRelation("invoices", {
   model: invoiceModel,
   type: "one-to-many",
   foreignKey: "booking_id",
+  localKey: "id",
+});
+
+bookingModel.setRelation("schedule", {
+  model: packageScheduleModel,
+  type: "one-to-one",
+  foreignKey: "package_schedule_id",
   localKey: "id",
 });
 
