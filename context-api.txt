@@ -1,0 +1,353 @@
+# Context API: Sharull Backend
+
+## Struktur Endpoint
+- Semua endpoint utama berada di bawah prefix `/api`.
+- Endpoint publik: `/api/login`, `/api/file-proxy/*`
+- Endpoint admin: `/api/admin/*` (wajib JWT admin)
+
+---
+
+## 1. **Auth & File**
+### Login
+- **POST** `/api/login`
+- **Body:** `{ "email": "admin@mail.com", "password": "..." }`
+- **Response:**
+```json
+{
+  "msg": "Login successful",
+  "token": "<jwt-token>",
+  "data": {
+    "id": "admin1",
+    "name": "Admin",
+    "email": "admin@mail.com",
+    "role": "admin",
+    "phone": "08123456789"
+  }
+}
+```
+
+### File Proxy
+- **GET** `/api/file-proxy/:id`
+- **GET** `/api/file-proxy/fk/:id`
+- **GET** `/api/file-proxy/fk/singel/:id`
+- **Fungsi:** Mengambil file/gambar dari storage
+
+---
+
+## 2. **Users** (`/api/admin/users`)
+- **GET** `/list`
+- **Response:**
+```json
+{
+  "list": [
+    {
+      "no": 1,
+      "id": "user1",
+      "name": "Budi",
+      "email": "budi@mail.com",
+      "phone": "0812345678",
+      "role": "user"
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "limit": 10
+}
+```
+
+### Tambah user
+- **POST** `/` — Tambah user
+
+### Update user
+- **PUT** `/:id` — Update user
+
+### Hapus user
+- **DELETE** `/:id` — Hapus user
+
+---
+
+## 3. **Destinations** (`/api/admin/destination`)
+- **GET** `/list`
+- **Response:**
+```json
+{
+  "list": [
+    {
+      "no": 1,
+      "id": "dest1",
+      "name": "Bali",
+      "slug": "bali",
+      "category": "beach",
+      "city": "Denpasar",
+      "country": "Indonesia",
+      "is_active": true
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "limit": 10
+}
+```
+
+### Tambah destinasi
+- **POST** `/` — Tambah destinasi
+
+### Update destinasi
+- **PUT** `/:id` — Update destinasi
+
+### Hapus destinasi
+- **DELETE** `/:id` — Hapus destinasi
+
+---
+
+## 4. **Packages** (`/api/admin/packages`)
+- **GET** `/list`
+- **Response:**
+```json
+{
+  "list": [
+    {
+      "no": 1,
+      "id": "pkg1",
+      "name": "Paket Bali",
+      "destination_id": "dest1",
+      "description": "Liburan ke Bali",
+      "price": 2000000
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "limit": 10
+}
+```
+
+### Tambah paket
+- **POST** `/` — Tambah paket
+
+### Update paket
+- **PUT** `/:id` — Update paket
+
+### Hapus paket
+- **DELETE** `/:id` — Hapus paket
+
+---
+
+## 5. **Fleets** (`/api/admin/fleets`)
+- **GET** `/list`
+- **Response:**
+```json
+{
+  "list": [
+    {
+      "no": 1,
+      "id": "fleet1",
+      "name": "Bus Pariwisata",
+      "type": "bus",
+      "plate_number": "B 1234 CD",
+      "capacity": 40,
+      "driver_name": "Pak Joko",
+      "status": "ready"
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "limit": 10
+}
+```
+
+### Tambah armada
+- **POST** `/` — Tambah armada
+
+### Update armada
+- **PUT** `/:id` — Update armada
+
+### Hapus armada
+- **DELETE** `/:id` — Hapus armada
+
+---
+
+## 6. **Package Schedules** (`/api/admin/packagespackages`)
+- **GET** `/list`
+- **Response:**
+```json
+{
+  "list": [
+    {
+      "no": 1,
+      "id": "sch1",
+      "package_id": "pkg1",
+      "destination_ids": ["dest1", "dest2"],
+      "fleet_id": "fleet1",
+      "departure_date": "2024-07-01",
+      "return_date": "2024-07-05",
+      "departure_time": "08:00:00",
+      "available_seats": 30,
+      "package": { "id": "pkg1", "name": "Paket Bali" },
+      "fleet": { "id": "fleet1", "name": "Bus Pariwisata" },
+      "destinations": [
+        { "id": "dest1", "name": "Bali" },
+        { "id": "dest2", "name": "Lombok" }
+      ]
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "limit": 10
+}
+```
+
+### Tambah jadwal
+- **POST** `/` — Tambah jadwal (destination_ids: array)
+
+### Update jadwal
+- **PUT** `/:id` — Update jadwal
+
+### Hapus jadwal
+- **DELETE** `/:id` — Hapus jadwal
+
+### Contoh request:
+```json
+{
+  "package_id": "abc123",
+  "destination_ids": ["dest1", "dest2"],
+  "fleet_id": "fleet1",
+  "departure_date": "2024-07-01",
+  "return_date": "2024-07-05",
+  "departure_time": "08:00:00",
+  "available_seats": 30
+}
+```
+
+---
+
+## 7. **Bookings** (`/api/admin/bookings`)
+- **GET** `/list`
+- **Response:**
+```json
+{
+  "list": [
+    {
+      "no": 1,
+      "id": "book1",
+      "user_id": "user1",
+      "package_schedule_id": "sch1",
+      "booking_date": "2024-06-20",
+      "number_of_seats": 2,
+      "total_price": 4000000,
+      "payment_status": "paid"
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "limit": 10
+}
+```
+
+### Tambah booking
+- **POST** `/` — Tambah booking
+
+### Update booking
+- **PUT** `/:id` — Update booking
+
+### Hapus booking
+- **DELETE** `/:id` — Hapus booking
+
+---
+
+## 8. **Payment Methods** (`/api/admin/paymentmetodes`)
+- **GET** `/list`
+- **Response:**
+```json
+{
+  "list": [
+    {
+      "no": 1,
+      "id": "paym1",
+      "name": "Transfer Bank",
+      "account_number": "1234567890",
+      "bank_name": "BCA"
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "limit": 10
+}
+```
+
+### Tambah metode
+- **POST** `/` — Tambah metode
+
+### Update metode
+- **PUT** `/:id` — Update metode
+
+### Hapus metode
+- **DELETE** `/:id` — Hapus metode
+
+---
+
+## 9. **Payments** (`/api/admin/payments`)
+- **GET** `/list`
+- **Response:**
+```json
+{
+  "list": [
+    {
+      "no": 1,
+      "id": "pay1",
+      "booking_id": "book1",
+      "payment_method_id": "paym1",
+      "payment_date": "2024-06-21",
+      "payment_amount": 4000000,
+      "status": "pending"
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "limit": 10
+}
+```
+
+### Tambah pembayaran
+- **POST** `/` — Tambah pembayaran
+
+### Update pembayaran
+- **PUT** `/:id` — Update pembayaran
+
+### Hapus pembayaran
+- **DELETE** `/:id` — Hapus pembayaran
+
+---
+
+## 10. **Invoices** (`/api/admin/invoices`)
+- **GET** `/list`
+- **Response:**
+```json
+{
+  "list": [
+    {
+      "no": 1,
+      "id": "inv1",
+      "booking_id": "book1",
+      "invoice_number": "INV-2024-001",
+      "issued_date": "2024-07-01",
+      "due_date": "2024-07-05",
+      "status": "paid",
+      "created_at": "2024-07-01T10:00:00Z"
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "limit": 10
+}
+```
+
+### Tidak ada endpoint POST/PUT/DELETE untuk admin
+
+---
+
+## Catatan Umum
+- Semua endpoint admin wajib JWT admin (kecuali login & file-proxy)
+- Semua request/response dalam format JSON
+- Validasi input & error handling konsisten
+- Data invoice immutable (tidak bisa diubah/dihapus admin)
+- Untuk relasi, response list akan menampilkan data relasi (misal: destinations pada schedule) 
