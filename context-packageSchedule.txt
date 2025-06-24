@@ -1,0 +1,111 @@
+# Context API: Package Schedule (Jadwal Paket)
+
+## Endpoint Utama
+Semua endpoint di bawah ini berada di bawah prefix: `/api/admin/packagespackages`
+
+### 1. List Jadwal Paket
+- **GET** `/api/admin/packagespackages/list`
+- **Query:**
+  - page, limit, id, package_id, fleet_id, departure_date, orderBy
+- **Response:**
+```json
+{
+  "list": [
+    {
+      "no": 1,
+      "id": "sch1",
+      "package_id": "abc123",
+      "destination_ids": ["dest1", "dest2"],
+      "fleet_id": "fleet1",
+      "departure_date": "2024-07-01",
+      "return_date": "2024-07-05",
+      "departure_time": "08:00:00",
+      "available_seats": 30,
+      "package": { /* detail paket */ },
+      "fleet": { /* detail armada */ },
+      "destinations": [
+        { "id": "dest1", "name": "Bali", ... },
+        { "id": "dest2", "name": "Lombok", ... }
+      ]
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "limit": 10
+}
+```
+
+### 2. Tambah Jadwal Paket
+- **POST** `/api/admin/packagespackages`
+- **Body:**
+```json
+{
+  "package_id": "abc123",
+  "destination_ids": ["dest1", "dest2"],
+  "fleet_id": "fleet1",
+  "departure_date": "2024-07-01",
+  "return_date": "2024-07-05",
+  "departure_time": "08:00:00",
+  "available_seats": 30
+}
+```
+- **Response:**
+```json
+{
+  "msg": "Package schedule created successfully",
+  "data": {
+    "package_id": "abc123",
+    "destination_ids": ["dest1", "dest2"],
+    "fleet_id": "fleet1",
+    "departure_date": "2024-07-01",
+    "return_date": "2024-07-05",
+    "departure_time": "08:00:00",
+    "available_seats": 30
+  }
+}
+```
+
+### 3. Update Jadwal Paket
+- **PUT** `/api/admin/packagespackages/:id`
+- **Body:**
+```json
+{
+  "package_id": "abc123",
+  "destination_ids": ["dest1", "dest2", "dest3"],
+  "fleet_id": "fleet1",
+  "departure_date": "2024-07-02",
+  "return_date": "2024-07-06",
+  "departure_time": "09:00:00",
+  "available_seats": 25
+}
+```
+- **Response:**
+```json
+{
+  "msg": "Package schedule updated successfully",
+  "data": {
+    "id": "sch1",
+    "package_id": "abc123",
+    "destination_ids": ["dest1", "dest2", "dest3"],
+    "fleet_id": "fleet1",
+    "departure_date": "2024-07-02",
+    "return_date": "2024-07-06",
+    "departure_time": "09:00:00",
+    "available_seats": 25
+  }
+}
+```
+
+### 4. Hapus Jadwal Paket
+- **DELETE** `/api/admin/packagespackages/:id`
+- **Response:**
+```json
+{
+  "msg": "Package schedule deleted successfully"
+}
+```
+
+## Catatan
+- Field `destination_ids` wajib array of string (id destinasi), minimal 1.
+- Response list akan otomatis menampilkan detail destinasi pada field `destinations` (array objek).
+- Semua request dan response dalam format JSON. 

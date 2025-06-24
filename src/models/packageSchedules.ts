@@ -5,6 +5,7 @@ import { bookingModel } from "./bookings";
 export interface IPackageSchedule {
   id?: string;
   package_id: string; // Reference to packages.id
+  destination_ids: string[]; // Reference to destinations.id (multiple)
   fleet_id: string; // Reference to fleets.id
   departure_date: string; // Format: YYYY-MM-DD
   return_date: string; // Format: YYYY-MM-DD
@@ -15,6 +16,7 @@ export interface IPackageSchedule {
 
 export const PackageScheduleSchema: Schema = {
   package_id: "string",
+  destination_ids: ["string"],
   fleet_id: "string",
   departure_date: "string",
   return_date: "string",
