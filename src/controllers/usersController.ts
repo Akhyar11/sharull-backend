@@ -174,6 +174,60 @@ class UserController {
       return;
     }
   }
+
+  async profile(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = (req as any).user?.id;
+      if (!userId) {
+        res.status(401).json({ msg: "Unauthorized" });
+        return;
+      }
+      const users = await userModel.search("id", "==", userId);
+      if (!users[0]) {
+        res.status(404).json({ msg: "User not found" });
+        return;
+      }
+      const { password, ...user } = users[0];
+      res.status(200).json({ data: user });
+    } catch (error) {
+      res.status(500).json({ msg: "Failed to fetch profile" });
+    }
+  }
+
+  async updateProfile(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = (req as any).user?.id;
+      if (!userId) {
+        res.status(401).json({ msg: "Unauthorized" });
+        return;
+      }
+      const { name, email, password, phone, image } = req.body;
+      const users = await userModel.search("id", "==", userId);
+      if (!users[0]) {
+        res.status(404).json({ msg: "User not found" });
+        return;
+      }
+      if (image) {
+        await createImage(image as string, userId);
+      }
+      const newPassword = password
+        ? bcrypt.hashSync(password, 10)
+        : users[0].password;
+      const updatedUser: IUser = {
+        ...users[0],
+        name: name || users[0].name,
+        email: email || users[0].email,
+        password: newPassword,
+        phone: phone || users[0].phone,
+      };
+      await userModel.update(userId, updatedUser);
+      res
+        .status(200)
+        .json({ msg: "Profile updated successfully", data: updatedUser });
+    } catch (error) {
+      res.status(500).json({ msg: "Failed to update profile" });
+    }
+  }
 }
 
 export const userController = new UserController();

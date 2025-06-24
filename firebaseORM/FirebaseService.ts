@@ -682,6 +682,8 @@ class FirebaseAdminService {
     // Handle cascading delete for relations
     for (const relationName in this.relations) {
       const relation = this.relations[relationName];
+      if (!relation) continue; // Skip if relation is undefined
+
       const {
         model,
         type,
@@ -690,38 +692,50 @@ class FirebaseAdminService {
         onDeleteNull = false,
       } = relation;
 
-      if (type === "one-to-one") {
-        const relatedItems = await model.read();
-        const relatedItem = relatedItems.find(
-          (related) => related[foreignKey] === item[localKey]
-        );
-        if (relatedItem) {
-          await model.deleteWithRelation(relatedItem.id); // Recursive delete
-        }
-      } else if (type === "one-to-many") {
-        const relatedItems = await model.read();
-        const itemsToUpdateOrDelete = relatedItems.filter(
-          (related) => related[foreignKey] === item[localKey]
-        );
+      // Skip if any required relation property is undefined
+      if (!model || !type || !foreignKey || !localKey) {
+        console.log(`Skipping invalid relation: ${relationName}`);
+        continue;
+      }
 
-        for (const relatedItem of itemsToUpdateOrDelete) {
-          if (onDeleteNull) {
-            // Set foreign key to null
-            await model.update(relatedItem.id, { [foreignKey]: null });
-          } else {
-            // Delete the related item
+      try {
+        if (type === "one-to-one") {
+          const relatedItems = await model.read();
+          const relatedItem = relatedItems.find(
+            (related) => related[foreignKey] === item[localKey]
+          );
+          if (relatedItem) {
+            await model.deleteWithRelation(relatedItem.id); // Recursive delete
+          }
+        } else if (type === "one-to-many") {
+          const relatedItems = await model.read();
+          const itemsToUpdateOrDelete = relatedItems.filter(
+            (related) => related[foreignKey] === item[localKey]
+          );
+
+          for (const relatedItem of itemsToUpdateOrDelete) {
+            if (onDeleteNull) {
+              // Set foreign key to null
+              await model.update(relatedItem.id, { [foreignKey]: null });
+            } else {
+              // Delete the related item
+              await model.deleteWithRelation(relatedItem.id);
+            }
+          }
+        } else if (type === "many-to-many") {
+          const relatedItems = await model.read();
+          const itemsToDelete = relatedItems.filter((related) =>
+            related[foreignKey]?.includes(item[localKey])
+          );
+
+          for (const relatedItem of itemsToDelete) {
             await model.deleteWithRelation(relatedItem.id);
           }
         }
-      } else if (type === "many-to-many") {
-        const relatedItems = await model.read();
-        const itemsToDelete = relatedItems.filter((related) =>
-          related[foreignKey].includes(item[localKey])
-        );
-
-        for (const relatedItem of itemsToDelete) {
-          await model.deleteWithRelation(relatedItem.id);
-        }
+      } catch (error) {
+        console.log(`Error handling relation ${relationName}:`, error);
+        // Continue with other relations even if one fails
+        continue;
       }
     }
 

@@ -11,6 +11,7 @@ import { fleetController } from "../controllers/fleetsController";
 import { imageController } from "../controllers/imageController";
 import { destinationController } from "../controllers/destinationController";
 import { paymentMethodController } from "../controllers/paymentMetodeController";
+import { userAuthMiddleware } from "../middlewares/userMiddleware";
 
 class Route {
   public router: Router;
@@ -29,7 +30,16 @@ class Route {
       imageController.listByFKSingel
     );
 
+    this.userGroup();
     this.adminGroup();
+  }
+
+  private userGroup() {
+    const userRouter = Router();
+    userRouter.use(userAuthMiddleware);
+    userRouter.get("/profile", userController.profile);
+    userRouter.put("/profile", userController.update);
+    this.router.use("/user", userRouter);
   }
 
   private adminGroup() {
