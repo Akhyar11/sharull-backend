@@ -5,7 +5,7 @@ import { packageScheduleModel } from "./packageSchedules";
 
 export interface IPackage {
   name: string;
-  destination_id: string;
+  destination_ids: string[];
   description: string;
   price: number;
   [key: string]: any;
@@ -13,7 +13,7 @@ export interface IPackage {
 
 export const PackageSchema: Schema = {
   name: "string",
-  destination_id: "string",
+  destination_ids: ["string"],
   description: "string",
   price: "number",
 };

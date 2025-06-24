@@ -54,7 +54,7 @@ class PackageScheduleController {
       const paginatedSchedules = schedules.slice(startIndex, endIndex);
 
       const dataPromises = paginatedSchedules.map(async (schedule, index) => {
-        const packageData = await packageModel.search(
+        const packageResult = await packageModel.search(
           "id",
           "==",
           schedule.package_id
@@ -64,21 +64,22 @@ class PackageScheduleController {
           "==",
           schedule.fleet_id
         );
-        // Ambil data destinasi multiple
-        let destinations = [];
-        if (Array.isArray(schedule.destination_ids)) {
-          destinations = await Promise.all(
-            schedule.destination_ids.map(async (destId: string) => {
+
+        let pkg = packageResult[0];
+        if (pkg && Array.isArray(pkg.destination_ids)) {
+          const destinations = await Promise.all(
+            pkg.destination_ids.map(async (destId: string) => {
               const dest = await destinationModel.search("id", "==", destId);
               return dest[0] || null;
             })
           );
+          pkg.destinations = destinations.filter((d) => d);
         }
+
         return {
           no: index + 1 + startIndex,
-          package: packageData[0],
+          package: pkg,
           fleet: fleetData[0],
-          destinations,
           ...schedule,
         };
       });
@@ -100,7 +101,6 @@ class PackageScheduleController {
     try {
       const {
         package_id,
-        destination_ids,
         fleet_id,
         departure_date,
         return_date,
@@ -110,9 +110,6 @@ class PackageScheduleController {
 
       if (
         !package_id ||
-        !destination_ids ||
-        !Array.isArray(destination_ids) ||
-        destination_ids.length === 0 ||
         !fleet_id ||
         !departure_date ||
         !return_date ||
@@ -120,14 +117,13 @@ class PackageScheduleController {
         !available_seats
       ) {
         res.status(400).json({
-          msg: "All fields are required, destination_ids harus array dan tidak kosong",
+          msg: "All fields are required",
         });
         return;
       }
 
       const newSchedule: IPackageSchedule = {
         package_id,
-        destination_ids,
         fleet_id,
         departure_date,
         return_date,
@@ -150,7 +146,6 @@ class PackageScheduleController {
       const { id } = req.params;
       const {
         package_id,
-        destination_ids,
         fleet_id,
         departure_date,
         return_date,
@@ -168,10 +163,6 @@ class PackageScheduleController {
       const updatedSchedule: IPackageSchedule = {
         ...schedules[0],
         package_id: package_id || schedules[0].package_id,
-        destination_ids:
-          Array.isArray(destination_ids) && destination_ids.length > 0
-            ? destination_ids
-            : schedules[0].destination_ids,
         fleet_id: fleet_id || schedules[0].fleet_id,
         departure_date: departure_date || schedules[0].departure_date,
         return_date: return_date || schedules[0].return_date,
