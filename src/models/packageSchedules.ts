@@ -29,12 +29,5 @@ const packageScheduleModel = new FirebaseService(
   PackageScheduleSchema
 );
 
-packageScheduleModel.setRelation("bookings", {
-  model: bookingModel,
-  type: "one-to-many",
-  foreignKey: "booking_id",
-  localKey: "id",
-});
-
 // Export the model
 export { packageScheduleModel };
