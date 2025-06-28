@@ -158,6 +158,91 @@ class PackageController {
       res.status(500).json({ msg: "Failed to delete package" });
     }
   }
+
+  async listForUser(req: Request, res: Response) {
+    try {
+      const { page, limit, search, orderBy = "name_asc" } = req.query;
+
+      const filters: Where[] = [];
+
+      if (search) {
+        filters.push({ field: "name", operator: ">=", value: search });
+      }
+
+      const orderByOptions: OrderBy = {
+        field: (orderBy as string).split("_")[0],
+        direction: (orderBy as string).split("_")[1] as "asc" | "desc",
+      };
+
+      const packages = await packageModel.searchWheres(filters, orderByOptions);
+
+      // Get destinations for each package
+      const packagesWithDestinations = await Promise.all(
+        packages.map(async (pkg) => {
+          const destinations = await Promise.all(
+            pkg.destination_ids.map(async (destId: string) => {
+              const dest = await destinationModel.search("id", "==", destId);
+              return dest[0];
+            })
+          );
+          return {
+            ...pkg,
+            destinations,
+          };
+        })
+      );
+
+      // Apply pagination
+      const pageNumber = parseInt(page as string) || 1;
+      const limitNumber = parseInt(limit as string) || 10;
+      const startIndex = (pageNumber - 1) * limitNumber;
+      const endIndex = startIndex + limitNumber;
+      const paginatedPackages = packagesWithDestinations.slice(
+        startIndex,
+        endIndex
+      );
+
+      res.status(200).json({
+        list: paginatedPackages,
+        total: packages.length,
+        page: pageNumber,
+        limit: limitNumber,
+      });
+    } catch (error) {
+      res.status(500).json({ msg: "Failed to fetch packages" });
+    }
+  }
+
+  async detailForUser(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const packages = await packageModel.search("id", "==", id);
+
+      if (!packages[0]) {
+        res.status(404).json({ msg: "Package not found" });
+        return;
+      }
+
+      const pkg = packages[0];
+
+      // Get destinations
+      const destinations = await Promise.all(
+        pkg.destination_ids.map(async (destId: string) => {
+          const dest = await destinationModel.search("id", "==", destId);
+          return dest[0];
+        })
+      );
+
+      const packageWithDetails = {
+        ...pkg,
+        destinations,
+      };
+
+      res.status(200).json({ data: packageWithDetails });
+    } catch (error) {
+      res.status(500).json({ msg: "Failed to fetch package details" });
+    }
+  }
 }
 
 export const packageController = new PackageController();

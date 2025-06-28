@@ -138,6 +138,29 @@ class PaymentMethodController {
       res.status(500).json({ msg: "Failed to delete payment method" });
     }
   }
+
+  async listForUser(req: Request, res: Response) {
+    try {
+      const { orderBy = "name_asc" } = req.query;
+
+      const orderByOptions: OrderBy = {
+        field: (orderBy as string).split("_")[0],
+        direction: (orderBy as string).split("_")[1] as "asc" | "desc",
+      };
+
+      // Get all active payment methods
+      const paymentMethods = await paymentMethodModel.searchWheres(
+        [{ field: "is_active", operator: "==", value: true }],
+        orderByOptions
+      );
+
+      res.status(200).json({
+        list: paymentMethods,
+      });
+    } catch (error) {
+      res.status(500).json({ msg: "Failed to fetch payment methods" });
+    }
+  }
 }
 
 export const paymentMethodController = new PaymentMethodController();

@@ -9,6 +9,7 @@ import {
 } from "../models/packageSchedules";
 import { IPackage, packageModel } from "../models/packages";
 import { IPaymentMethod, paymentMethodModel } from "../models/paymentMetode";
+import { createImage } from "./imageController";
 
 class PaymentController {
   async list(req: Request, res: Response): Promise<void> {
@@ -252,6 +253,184 @@ class PaymentController {
       });
     } catch (error) {
       res.status(500).json({ msg: "Failed to approve payment" });
+    }
+  }
+
+  async listForUser(req: Request, res: Response) {
+    try {
+      const userId = (req as any).user?.id;
+      const { page, limit, orderBy = "created_at_desc" } = req.query;
+
+      // Get user's bookings first
+      const bookings = await bookingModel.searchWheres([
+        { field: "user_id", operator: "==", value: userId },
+      ]);
+
+      const booking_ids = bookings.map((booking) => booking.id);
+
+      // Get payments for those bookings
+      const filters: Where[] = [
+        { field: "booking_id", operator: "in", value: booking_ids },
+      ];
+
+      const orderByOptions: OrderBy = {
+        field: (orderBy as string).split("_")[0],
+        direction: (orderBy as string).split("_")[1] as "asc" | "desc",
+      };
+
+      const payments = await paymentModel.searchWheres(filters, orderByOptions);
+
+      // Get payment method details
+      const paymentsWithDetails = await Promise.all(
+        payments.map(async (payment) => {
+          const [payment_method] = await paymentMethodModel.search(
+            "id",
+            "==",
+            payment.payment_method_id
+          );
+          const [booking] = await bookingModel.search(
+            "id",
+            "==",
+            payment.booking_id
+          );
+
+          return {
+            ...payment,
+            payment_method,
+            booking,
+          };
+        })
+      );
+
+      // Apply pagination
+      const pageNumber = parseInt(page as string) || 1;
+      const limitNumber = parseInt(limit as string) || 10;
+      const startIndex = (pageNumber - 1) * limitNumber;
+      const endIndex = startIndex + limitNumber;
+      const paginatedPayments = paymentsWithDetails.slice(startIndex, endIndex);
+
+      res.status(200).json({
+        list: paginatedPayments,
+        total: payments.length,
+        page: pageNumber,
+        limit: limitNumber,
+      });
+    } catch (error) {
+      res.status(500).json({ msg: "Failed to fetch payments" });
+    }
+  }
+
+  async detailForUser(req: Request, res: Response) {
+    try {
+      const userId = (req as any).user?.id;
+      const { id } = req.params;
+
+      const payments = await paymentModel.search("id", "==", id);
+
+      if (!payments[0]) {
+        res.status(404).json({ msg: "Payment not found" });
+        return;
+      }
+
+      const payment = payments[0];
+
+      // Verify payment belongs to user's booking
+      const [booking] = await bookingModel.search(
+        "id",
+        "==",
+        payment.booking_id
+      );
+      if (!booking || booking.user_id !== userId) {
+        res.status(403).json({ msg: "Unauthorized to view this payment" });
+        return;
+      }
+
+      // Get payment method details
+      const [payment_method] = await paymentMethodModel.search(
+        "id",
+        "==",
+        payment.payment_method_id
+      );
+
+      const paymentWithDetails = {
+        ...payment,
+        payment_method,
+        booking,
+      };
+
+      res.status(200).json({ data: paymentWithDetails });
+    } catch (error) {
+      res.status(500).json({ msg: "Failed to fetch payment details" });
+    }
+  }
+
+  async createForUser(req: Request, res: Response) {
+    try {
+      const userId = (req as any).user?.id;
+      const { booking_id, payment_method_id, amount, payment_proof } = req.body;
+
+      if (!booking_id || !payment_method_id || !amount || !payment_proof) {
+        res.status(400).json({ msg: "All fields are required" });
+        return;
+      }
+
+      // Verify booking belongs to user
+      const bookings = await bookingModel.search("id", "==", booking_id);
+      if (!bookings[0]) {
+        res.status(404).json({ msg: "Booking not found" });
+        return;
+      }
+
+      const booking = bookings[0];
+      if (booking.user_id !== userId) {
+        res.status(403).json({ msg: "Unauthorized to pay for this booking" });
+        return;
+      }
+
+      // Verify payment method exists and is active
+      const paymentMethods = await paymentMethodModel.search(
+        "id",
+        "==",
+        payment_method_id
+      );
+      if (!paymentMethods[0] || !paymentMethods[0].is_active) {
+        res.status(400).json({ msg: "Invalid or inactive payment method" });
+        return;
+      }
+
+      // Create payment
+      const newPayment: IPayment = {
+        booking_id,
+        payment_method_id,
+        payment_date: new Date().toISOString(),
+        payment_amount: amount,
+        payment_proof,
+        status: "pending",
+        is_approved: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      const createdPayment = await paymentModel.create(newPayment);
+
+      // Simpan image payment_proof jika ada
+      if (payment_proof) {
+        await createImage(payment_proof, createdPayment.id);
+      }
+
+      // Update booking payment status
+      await bookingModel.update(booking_id, {
+        ...booking,
+        payment_status: "pending",
+        updated_at: new Date().toISOString(),
+      });
+
+      res.status(201).json({
+        msg: "Payment created successfully",
+        data: createdPayment,
+      });
+    } catch (error) {
+      res.status(500).json({ msg: "Failed to create payment" });
     }
   }
 }

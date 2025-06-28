@@ -9,7 +9,11 @@ export interface IUser {
   email: string;
   password: string;
   phone: string;
-  role: "admin" | "customer";
+  role: "admin" | "customer" | "user";
+  reset_token?: string;
+  reset_token_expires?: string;
+  created_at?: string;
+  updated_at?: string;
   [key: string]: any;
 }
 
@@ -20,6 +24,10 @@ export const UserSchema: Schema = {
   password: "string",
   phone: "string",
   role: "string",
+  reset_token: "string",
+  reset_token_expires: "string",
+  created_at: "string",
+  updated_at: "string",
 };
 
 const userModel = new FirebaseService("users", UserSchema);

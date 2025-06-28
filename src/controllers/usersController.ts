@@ -3,6 +3,9 @@ import { userModel, IUser } from "../models/users";
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import { createImage } from "./imageController";
+import jwt from "jsonwebtoken";
+import { sendEmail } from "../utils/email";
+import { generateResetToken, verifyResetToken } from "../utils/token";
 
 class UserController {
   async list(req: Request, res: Response) {
@@ -226,6 +229,223 @@ class UserController {
         .json({ msg: "Profile updated successfully", data: updatedUser });
     } catch (error) {
       res.status(500).json({ msg: "Failed to update profile" });
+    }
+  }
+
+  async register(req: Request, res: Response): Promise<void> {
+    try {
+      const { name, email, password, phone } = req.body;
+
+      // Validate required fields
+      if (!name || !email || !password || !phone) {
+        res.status(400).json({ msg: "All fields are required" });
+        return;
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        res.status(400).json({ msg: "Invalid email format" });
+        return;
+      }
+
+      // Validate phone format (minimal 10 digit, maksimal 13 digit)
+      const phoneRegex = /^[0-9]{10,13}$/;
+      if (!phoneRegex.test(phone)) {
+        res.status(400).json({ msg: "Invalid phone number format" });
+        return;
+      }
+
+      // Check existing email and phone
+      const users = await userModel.read();
+      const existingEmailUser = users.find((user) => user.email === email);
+      const existingPhoneUser = users.find((user) => user.phone === phone);
+
+      if (existingEmailUser) {
+        res.status(400).json({ msg: "Email already registered" });
+        return;
+      }
+
+      if (existingPhoneUser) {
+        res.status(400).json({ msg: "Phone number already registered" });
+        return;
+      }
+
+      // Create new user
+      const newUser: IUser = {
+        name,
+        email,
+        password: bcrypt.hashSync(password, 10),
+        phone,
+        role: "user",
+        image_id: "",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      const createdUser = await userModel.create(newUser);
+      const { password: _, ...userWithoutPassword } = createdUser;
+
+      // Generate JWT token
+      const token = jwt.sign(
+        { id: createdUser.id, role: "user" },
+        process.env.JWT_SECRET || "your-secret-key",
+        { expiresIn: "24h" }
+      );
+
+      res.status(201).json({
+        msg: "Registration successful",
+        data: userWithoutPassword,
+        token,
+      });
+    } catch (error) {
+      res.status(500).json({ msg: "Failed to register user" });
+    }
+  }
+
+  async login(req: Request, res: Response): Promise<void> {
+    try {
+      const { email, password } = req.body;
+
+      if (!email || !password) {
+        res.status(400).json({ msg: "Email and password are required" });
+        return;
+      }
+
+      // Find user by email
+      const users = await userModel.search("email", "==", email);
+      const user = users[0];
+
+      if (!user || user.role !== "user") {
+        res.status(401).json({ msg: "Invalid credentials" });
+        return;
+      }
+
+      // Verify password
+      const isPasswordValid = bcrypt.compareSync(password, user.password);
+      if (!isPasswordValid) {
+        res.status(401).json({ msg: "Invalid credentials" });
+        return;
+      }
+
+      // Generate JWT token
+      const token = jwt.sign(
+        { id: user.id, role: "user" },
+        process.env.JWT_SECRET || "your-secret-key",
+        { expiresIn: "24h" }
+      );
+
+      const { password: _, ...userWithoutPassword } = user;
+
+      res.status(200).json({
+        msg: "Login successful",
+        data: userWithoutPassword,
+        token,
+      });
+    } catch (error) {
+      res.status(500).json({ msg: "Failed to login" });
+    }
+  }
+
+  async forgotPassword(req: Request, res: Response): Promise<void> {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        res.status(400).json({ msg: "Email is required" });
+        return;
+      }
+
+      // Find user by email
+      const users = await userModel.search("email", "==", email);
+      const user = users[0];
+
+      if (!user || user.role !== "user") {
+        res.status(404).json({ msg: "User not found" });
+        return;
+      }
+
+      // Generate reset token
+      const resetToken = generateResetToken(user.id);
+
+      // Save reset token to user data
+      await userModel.update(user.id, {
+        ...user,
+        reset_token: resetToken,
+        reset_token_expires: new Date(Date.now() + 3600000).toISOString(), // Token valid for 1 hour
+      });
+
+      // Send reset password email
+      const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+      await sendEmail({
+        to: email,
+        subject: "Reset Password",
+        html: `
+          <h1>Reset Password</h1>
+          <p>Click the link below to reset your password:</p>
+          <a href="${resetLink}">${resetLink}</a>
+          <p>This link will expire in 1 hour.</p>
+        `,
+      });
+
+      res.status(200).json({
+        msg: "Reset password instructions sent to your email",
+      });
+    } catch (error) {
+      res
+        .status(500)
+        .json({ msg: "Failed to process forgot password request" });
+    }
+  }
+
+  async resetPassword(req: Request, res: Response): Promise<void> {
+    try {
+      const { token, new_password } = req.body;
+
+      if (!token || !new_password) {
+        res.status(400).json({ msg: "Token and new password are required" });
+        return;
+      }
+
+      // Verify token and get user ID
+      const userId = verifyResetToken(token);
+      if (!userId) {
+        res.status(400).json({ msg: "Invalid or expired token" });
+        return;
+      }
+
+      // Find user
+      const users = await userModel.search("id", "==", userId);
+      const user = users[0];
+
+      if (!user || user.role !== "user") {
+        res.status(404).json({ msg: "User not found" });
+        return;
+      }
+
+      // Verify token expiration
+      if (
+        !user.reset_token ||
+        user.reset_token !== token ||
+        new Date() > new Date(user.reset_token_expires)
+      ) {
+        res.status(400).json({ msg: "Invalid or expired token" });
+        return;
+      }
+
+      // Update password
+      const hashedPassword = bcrypt.hashSync(new_password, 10);
+      await userModel.update(user.id, {
+        ...user,
+        password: hashedPassword,
+        reset_token: null,
+        reset_token_expires: null,
+        updated_at: new Date().toISOString(),
+      });
+
+      res.status(200).json({ msg: "Password reset successful" });
+    } catch (error) {
+      res.status(500).json({ msg: "Failed to reset password" });
     }
   }
 }

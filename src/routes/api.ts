@@ -37,8 +37,35 @@ class Route {
   private userGroup() {
     const userRouter = Router();
     userRouter.use(userAuthMiddleware);
+
+    // Profile
     userRouter.get("/profile", userController.profile);
     userRouter.put("/profile", userController.update);
+
+    // Packages
+    userRouter.get("/packages", packageController.listForUser);
+    userRouter.get("/packages/:id", packageController.detailForUser);
+
+    // Package Schedules
+    userRouter.get(
+      "/packages/:packageId/schedules",
+      packageScheduleController.listForUser
+    );
+    userRouter.get("/schedules/:id", packageScheduleController.detailForUser);
+
+    // Bookings
+    userRouter.get("/bookings", bookingController.listForUser);
+    userRouter.get("/bookings/:id", bookingController.detailForUser);
+    userRouter.post("/bookings", bookingController.createForUser);
+
+    // Payment Methods
+    userRouter.get("/payment-methods", paymentMethodController.listForUser);
+
+    // Payments
+    userRouter.get("/payments", paymentController.listForUser);
+    userRouter.get("/payments/:id", paymentController.detailForUser);
+    userRouter.post("/payments", paymentController.createForUser);
+
     this.router.use("/user", userRouter);
   }
 

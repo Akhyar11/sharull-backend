@@ -200,6 +200,104 @@ class PackageScheduleController {
       res.status(500).json({ msg: "Failed to delete package schedule" });
     }
   }
+
+  async listForUser(req: Request, res: Response) {
+    try {
+      const { packageId } = req.params;
+      const { page, limit, orderBy = "departure_date_asc" } = req.query;
+
+      const filters: Where[] = [
+        { field: "package_id", operator: "==", value: packageId },
+      ];
+
+      const orderByOptions: OrderBy = {
+        field: (orderBy as string).split("_")[0],
+        direction: (orderBy as string).split("_")[1] as "asc" | "desc",
+      };
+
+      const schedules = await packageScheduleModel.searchWheres(
+        filters,
+        orderByOptions
+      );
+
+      // Get package and fleet details
+      const schedulesWithDetails = await Promise.all(
+        schedules.map(async (schedule) => {
+          const [package_data] = await packageModel.search(
+            "id",
+            "==",
+            schedule.package_id
+          );
+          const [fleet_data] = await fleetModel.search(
+            "id",
+            "==",
+            schedule.fleet_id
+          );
+
+          return {
+            ...schedule,
+            package_data,
+            fleet_data,
+          };
+        })
+      );
+
+      // Apply pagination
+      const pageNumber = parseInt(page as string) || 1;
+      const limitNumber = parseInt(limit as string) || 10;
+      const startIndex = (pageNumber - 1) * limitNumber;
+      const endIndex = startIndex + limitNumber;
+      const paginatedSchedules = schedulesWithDetails.slice(
+        startIndex,
+        endIndex
+      );
+
+      res.status(200).json({
+        list: paginatedSchedules,
+        total: schedules.length,
+        page: pageNumber,
+        limit: limitNumber,
+      });
+    } catch (error) {
+      res.status(500).json({ msg: "Failed to fetch schedules" });
+    }
+  }
+
+  async detailForUser(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const schedules = await packageScheduleModel.search("id", "==", id);
+
+      if (!schedules[0]) {
+        res.status(404).json({ msg: "Schedule not found" });
+        return;
+      }
+
+      const schedule = schedules[0];
+
+      // Get package and fleet details
+      const [package_data] = await packageModel.search(
+        "id",
+        "==",
+        schedule.package_id
+      );
+      const [fleet_data] = await fleetModel.search(
+        "id",
+        "==",
+        schedule.fleet_id
+      );
+
+      const scheduleWithDetails = {
+        ...schedule,
+        package_data,
+        fleet_data,
+      };
+
+      res.status(200).json({ data: scheduleWithDetails });
+    } catch (error) {
+      res.status(500).json({ msg: "Failed to fetch schedule details" });
+    }
+  }
 }
 
 export const packageScheduleController = new PackageScheduleController();
