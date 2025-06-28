@@ -1,0 +1,2790 @@
+# Konteks API untuk Peran Pengguna dan Admin
+
+Dokumen ini menyediakan konteks untuk semua API yang tersedia.
+
+---
+
+## 0. Autentikasi Publik
+
+### 0.1. Login Admin
+
+- **Deskripsi:** Melakukan autentikasi pengguna dengan peran 'admin' dan mengembalikan token JWT.
+- **Endpoint:** `/api/login`
+- **Metode:** `POST`
+- **Request:**
+  - **Headers:** `Content-Type: application/json`
+  - **Body:**
+    ```json
+    {
+      "email": "string (required)",
+      "password": "string (required)"
+    }
+    ```
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "msg": "Login successful",
+      "token": "string (JWT token)",
+      "data": {
+        "id": "string",
+        "name": "string",
+        "email": "string",
+        "role": "admin",
+        "phone": "string"
+      }
+    }
+    ```
+  - **400 Bad Request:** Jika email atau password tidak disediakan.
+    ```json
+    {
+      "msg": "Email and password are required"
+    }
+    ```
+  - **404 Not Found:** Jika pengguna tidak ditemukan.
+    ```json
+    {
+      "msg": "User not found"
+    }
+    ```
+  - **403 Forbidden:** Jika pengguna bukan admin.
+    ```json
+    {
+      "msg": "Access denied, not an admin"
+    }
+    ```
+  - **400 Bad Request:** Jika kredensial tidak valid.
+    ```json
+    {
+      "msg": "Invalid credentials"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Server error"
+    }
+    ```
+
+### 0.2. Register Pengguna
+
+- **Deskripsi:** Mendaftarkan pengguna baru dengan peran 'customer'.
+- **Endpoint:** `/api/register`
+- **Metode:** `POST`
+- **Request:**
+  - **Headers:** `Content-Type: application/json`
+  - **Body:**
+    ```json
+    {
+      "name": "string (required)",
+      "email": "string (required)",
+      "password": "string (required)",
+      "phone": "string (required)"
+    }
+    ```
+- **Response:**
+  - **201 Created:**
+    ```json
+    {
+      "id": "string",
+      "name": "string",
+      "email": "string",
+      "phone": "string",
+      "role": "customer",
+      "created_at": "string",
+      "updated_at": "string"
+    }
+    ```
+  - **400 Bad Request:** Jika ada field yang tidak diisi, format email/telepon tidak valid, atau email/telepon sudah terdaftar.
+    ```json
+    {
+      "msg": "All fields are required"
+    }
+    ```
+  - **409 Conflict:** Jika email sudah terdaftar.
+    ```json
+    {
+      "message": "User already exists"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "message": "Internal server error"
+    }
+    ```
+
+### 0.3. File Proxy (Berdasarkan ID)
+
+- **Deskripsi:** Mengambil file gambar berdasarkan ID gambar.
+- **Endpoint:** `/api/file-proxy/:id`
+- **Metode:** `GET`
+- **Params:**
+  - `id`: `string` (ID gambar)
+- **Response:**
+  - **200 OK:** Mengembalikan file gambar (Content-Type akan sesuai dengan tipe gambar).
+  - **404 Not Found:** Jika gambar tidak ditemukan.
+    ```json
+    {
+      "msg": "Image not found"
+    }
+    ```
+  - **400 Bad Request:** Jika format base64 gambar tidak valid.
+    ```json
+    {
+      "msg": "Invalid base64 image format"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to fetch image"
+    }
+    ```
+
+### 0.4. File Proxy (Berdasarkan Foreign Key)
+
+- **Deskripsi:** Mengambil daftar gambar berdasarkan Foreign Key (FK).
+- **Endpoint:** `/api/file-proxy/fk/:id`
+- **Metode:** `GET`
+- **Params:**
+  - `id`: `string` (Foreign Key)
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "images": [
+        {
+          "id": "string",
+          "FK": "string",
+          "image_base64": "string (base64 encoded image data)",
+          "created_at": "string",
+          "updated_at": "string"
+        }
+      ]
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to fetch image"
+    }
+    ```
+
+### 0.5. File Proxy (Berdasarkan Foreign Key Tunggal)
+
+- **Deskripsi:** Mengambil satu file gambar berdasarkan Foreign Key (FK).
+- **Endpoint:** `/api/file-proxy/fk/singel/:id`
+- **Metode:** `GET`
+- **Params:**
+  - `id`: `string` (Foreign Key)
+- **Response:**
+  - **200 OK:** Mengembalikan file gambar (Content-Type akan sesuai dengan tipe gambar).
+  - **404 Not Found:** Jika gambar tidak ditemukan.
+    ```json
+    {
+      "msg": "Image not found"
+    }
+    ```
+  - **400 Bad Request:** Jika format base64 gambar tidak valid.
+    ```json
+    {
+      "msg": "Invalid base64 image format"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to fetch image"
+    }
+    ```
+
+---
+
+## 1. Grup Pengguna (Memerlukan Autentikasi Pengguna)
+
+Semua rute di bawah ini memerlukan header `Authorization: Bearer <token>` dengan token JWT pengguna.
+
+### 1.1. Profil Pengguna
+
+#### 1.1.1. Lihat Profil
+
+- **Deskripsi:** Mengambil detail profil pengguna yang sedang login.
+- **Endpoint:** `/api/user/profile`
+- **Metode:** `GET`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "data": {
+        "id": "string",
+        "name": "string",
+        "email": "string",
+        "phone": "string",
+        "role": "user",
+        "image_id": "string",
+        "created_at": "string",
+        "updated_at": "string"
+      }
+    }
+    ```
+  - **401 Unauthorized:** Jika token tidak valid atau tidak ada.
+    ```json
+    {
+      "msg": "Unauthorized"
+    }
+    ```
+  - **404 Not Found:** Jika pengguna tidak ditemukan.
+    ```json
+    {
+      "msg": "User not found"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to fetch profile"
+    }
+    ```
+
+#### 1.1.2. Perbarui Profil
+
+- **Deskripsi:** Memperbarui detail profil pengguna yang sedang login.
+- **Endpoint:** `/api/user/profile`
+- **Metode:** `PUT`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Body:**
+    ```json
+    {
+      "name": "string (opsional)",
+      "email": "string (opsional)",
+      "password": "string (opsional)",
+      "phone": "string (opsional)",
+      "image": "string (base64, opsional)"
+    }
+    ```
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "msg": "Profile updated successfully",
+      "data": {
+        "id": "string",
+        "name": "string",
+        "email": "string",
+        "phone": "string",
+        "role": "user",
+        "image_id": "string",
+        "created_at": "string",
+        "updated_at": "string"
+      }
+    }
+    ```
+  - **401 Unauthorized:** Jika token tidak valid atau tidak ada.
+    ```json
+    {
+      "msg": "Unauthorized"
+    }
+    ```
+  - **404 Not Found:** Jika pengguna tidak ditemukan.
+    ```json
+    {
+      "msg": "User not found"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to update profile"
+    }
+    ```
+
+### 1.2. Paket Perjalanan
+
+#### 1.2.1. Daftar Paket
+
+- **Deskripsi:** Mendapatkan daftar semua paket perjalanan yang tersedia untuk pengguna.
+- **Endpoint:** `/api/user/packages`
+- **Metode:** `GET`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Query Params:**
+    - `page`: `number` (opsional, default: 1)
+    - `limit`: `number` (opsional, default: 10)
+    - `search`: `string` (opsional, untuk mencari berdasarkan nama paket)
+    - `orderBy`: `string` (opsional, contoh: `name_asc`, `price_desc`. Default: `name_asc`)
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "list": [
+        {
+          "id": "string",
+          "name": "string",
+          "description": "string",
+          "destination_ids": ["string"],
+          "price": "number",
+          "created_at": "string",
+          "updated_at": "string",
+          "destinations": [
+            {
+              "id": "string",
+              "name": "string",
+              "slug": "string",
+              "description": "string",
+              "location_point": "string",
+              "province": "string",
+              "city": "string",
+              "country": "string",
+              "category": "string",
+              "popularity": "number",
+              "featured": "boolean",
+              "image_id": "string",
+              "gallery": "string",
+              "average_rating": "number",
+              "review_count": "number",
+              "is_active": "boolean",
+              "meta_keywords": "string",
+              "meta_description": "string",
+              "created_at": "string",
+              "updated_at": "string"
+            }
+          ]
+        }
+      ],
+      "total": "number",
+      "page": "number",
+      "limit": "number"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to fetch packages"
+    }
+    ```
+
+#### 1.2.2. Detail Paket
+
+- **Deskripsi:** Mendapatkan detail satu paket perjalanan berdasarkan ID.
+- **Endpoint:** `/api/user/packages/:id`
+- **Metode:** `GET`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Params:**
+    - `id`: `string` (ID paket)
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "data": {
+        "id": "string",
+        "name": "string",
+        "description": "string",
+        "destination_ids": ["string"],
+        "price": "number",
+        "created_at": "string",
+        "updated_at": "string",
+        "destinations": [
+          {
+            "id": "string",
+            "name": "string",
+            "slug": "string",
+            "description": "string",
+            "location_point": "string",
+            "province": "string",
+            "city": "string",
+            "country": "string",
+            "category": "string",
+            "popularity": "number",
+            "featured": "boolean",
+            "image_id": "string",
+            "gallery": "string",
+            "average_rating": "number",
+            "review_count": "number",
+            "is_active": "boolean",
+            "meta_keywords": "string",
+            "meta_description": "string",
+            "created_at": "string",
+            "updated_at": "string"
+          }
+        ]
+      }
+    }
+    ```
+  - **404 Not Found:** Jika paket tidak ditemukan.
+    ```json
+    {
+      "msg": "Package not found"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to fetch package details"
+    }
+    ```
+
+### 1.3. Jadwal Paket
+
+#### 1.3.1. Daftar Jadwal per Paket
+
+- **Deskripsi:** Mendapatkan daftar jadwal yang tersedia untuk paket tertentu.
+- **Endpoint:** `/api/user/packages/:packageId/schedules`
+- **Metode:** `GET`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Params:**
+    - `packageId`: `string` (ID paket)
+  - **Query Params:**
+    - `page`: `number` (opsional, default: 1)
+    - `limit`: `number` (opsional, default: 10)
+    - `orderBy`: `string` (opsional, contoh: `departure_date_asc`. Default: `departure_date_asc`)
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "list": [
+        {
+          "id": "string",
+          "package_id": "string",
+          "fleet_id": "string",
+          "departure_date": "string",
+          "return_date": "string",
+          "departure_time": "string",
+          "available_seats": "number",
+          "created_at": "string",
+          "updated_at": "string",
+          "package_data": {
+            "id": "string",
+            "name": "string",
+            "description": "string",
+            "destination_ids": ["string"],
+            "price": "number",
+            "created_at": "string",
+            "updated_at": "string"
+          },
+          "fleet_data": {
+            "id": "string",
+            "name": "string",
+            "type": "string",
+            "plate_number": "string",
+            "capacity": "number",
+            "driver_name": "string",
+            "status": "string",
+            "created_at": "string",
+            "updated_at": "string"
+          }
+        }
+      ],
+      "total": "number",
+      "page": "number",
+      "limit": "number"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to fetch schedules"
+    }
+    ```
+
+#### 1.3.2. Detail Jadwal
+
+- **Deskripsi:** Mendapatkan detail satu jadwal berdasarkan ID.
+- **Endpoint:** `/api/user/schedules/:id`
+- **Metode:** `GET`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Params:**
+    - `id`: `string` (ID jadwal)
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "data": {
+        "id": "string",
+        "package_id": "string",
+        "fleet_id": "string",
+        "departure_date": "string",
+        "return_date": "string",
+        "departure_time": "string",
+        "available_seats": "number",
+        "created_at": "string",
+        "updated_at": "string",
+        "package_data": {
+          "id": "string",
+          "name": "string",
+          "description": "string",
+          "destination_ids": ["string"],
+          "price": "number",
+          "created_at": "string",
+          "updated_at": "string"
+        },
+        "fleet_data": {
+          "id": "string",
+          "name": "string",
+          "type": "string",
+          "plate_number": "string",
+          "capacity": "number",
+          "driver_name": "string",
+          "status": "string",
+          "created_at": "string",
+          "updated_at": "string"
+        }
+      }
+    }
+    ```
+  - **404 Not Found:** Jika jadwal tidak ditemukan.
+    ```json
+    {
+      "msg": "Schedule not found"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to fetch schedule details"
+    }
+    ```
+
+### 1.4. Pemesanan (Bookings)
+
+#### 1.4.1. Daftar Pemesanan Pengguna
+
+- **Deskripsi:** Mendapatkan daftar semua pemesanan yang dilakukan oleh pengguna yang sedang login.
+- **Endpoint:** `/api/user/bookings`
+- **Metode:** `GET`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Query Params:**
+    - `page`: `number` (opsional, default: 1)
+    - `limit`: `number` (opsional, default: 10)
+    - `orderBy`: `string` (opsional, contoh: `created_at_desc`. Default: `created_at_desc`)
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "list": [
+        {
+          "id": "string",
+          "user_id": "string",
+          "package_schedule_id": "string",
+          "booking_date": "string",
+          "number_of_seats": "number",
+          "total_price": "number",
+          "payment_status": "string",
+          "notes": "string",
+          "created_at": "string",
+          "updated_at": "string",
+          "package_data": {
+            "id": "string",
+            "name": "string",
+            "description": "string",
+            "destination_ids": ["string"],
+            "price": "number",
+            "created_at": "string",
+            "updated_at": "string"
+          },
+          "schedule_data": {
+            "id": "string",
+            "package_id": "string",
+            "fleet_id": "string",
+            "departure_date": "string",
+            "return_date": "string",
+            "departure_time": "string",
+            "available_seats": "number",
+            "created_at": "string",
+            "updated_at": "string"
+          }
+        }
+      ],
+      "total": "number",
+      "page": "number",
+      "limit": "number"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to fetch bookings"
+    }
+    ```
+
+#### 1.4.2. Detail Pemesanan
+
+- **Deskripsi:** Mendapatkan detail satu pemesanan berdasarkan ID.
+- **Endpoint:** `/api/user/bookings/:id`
+- **Metode:** `GET`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Params:**
+    - `id`: `string` (ID pemesanan)
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "data": {
+        "id": "string",
+        "user_id": "string",
+        "package_schedule_id": "string",
+        "booking_date": "string",
+        "number_of_seats": "number",
+        "total_price": "number",
+        "payment_status": "string",
+        "notes": "string",
+        "created_at": "string",
+        "updated_at": "string",
+        "package_data": {
+          "id": "string",
+          "name": "string",
+          "description": "string",
+          "destination_ids": ["string"],
+          "price": "number",
+          "created_at": "string",
+          "updated_at": "string"
+        },
+        "schedule_data": {
+          "id": "string",
+          "package_id": "string",
+          "fleet_id": "string",
+          "departure_date": "string",
+          "return_date": "string",
+          "departure_time": "string",
+          "available_seats": "number",
+          "created_at": "string",
+          "updated_at": "string"
+        }
+      }
+    }
+    ```
+  - **403 Forbidden:** Jika pemesanan bukan milik pengguna.
+    ```json
+    {
+      "msg": "Unauthorized to view this booking"
+    }
+    ```
+  - **404 Not Found:** Jika pemesanan tidak ditemukan.
+    ```json
+    {
+      "msg": "Booking not found"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to fetch booking details"
+    }
+    ```
+
+#### 1.4.3. Buat Pemesanan
+
+- **Deskripsi:** Membuat pemesanan baru untuk sebuah jadwal paket.
+- **Endpoint:** `/api/user/bookings`
+- **Metode:** `POST`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Body:**
+    ```json
+    {
+      "schedule_id": "string (required)",
+      "number_of_people": "number (required)",
+      "notes": "string (opsional)"
+    }
+    ```
+- **Response:**
+  - **201 Created:**
+    ```json
+    {
+      "msg": "Booking created successfully",
+      "data": {
+        "id": "string",
+        "user_id": "string",
+        "package_schedule_id": "string",
+        "booking_date": "string",
+        "number_of_seats": "number",
+        "total_price": "number",
+        "payment_status": "pending",
+        "notes": "string",
+        "created_at": "string",
+        "updated_at": "string"
+      }
+    }
+    ```
+  - **400 Bad Request:** Jika input tidak valid (misal: `schedule_id` atau `number_of_people` tidak ada, atau kursi tidak tersedia).
+    ```json
+    {
+      "msg": "Schedule ID and number of people are required"
+    }
+    ```
+  - **404 Not Found:** Jika jadwal atau paket tidak ditemukan.
+    ```json
+    {
+      "msg": "Schedule not found"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to create booking"
+    }
+    ```
+
+### 1.5. Metode Pembayaran
+
+#### 1.5.1. Daftar Metode Pembayaran
+
+- **Deskripsi:** Mendapatkan daftar semua metode pembayaran yang aktif.
+- **Endpoint:** `/api/user/payment-methods`
+- **Metode:** `GET`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Query Params:**
+    - `orderBy`: `string` (opsional, contoh: `name_asc`. Default: `name_asc`)
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "list": [
+        {
+          "id": "string",
+          "name": "string",
+          "provider": "string",
+          "type": "virtual_account" | "bank_transfer" | "e_wallet",
+          "account_number": "string",
+          "account_name": "string",
+          "is_active": true,
+          "created_at": "string",
+          "updated_at": "string"
+        }
+      ]
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to fetch payment methods"
+    }
+    ```
+
+### 1.6. Pembayaran
+
+#### 1.6.1. Daftar Pembayaran Pengguna
+
+- **Deskripsi:** Mendapatkan daftar semua pembayaran yang dilakukan oleh pengguna yang sedang login.
+- **Endpoint:** `/api/user/payments`
+- **Metode:** `GET`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Query Params:**
+    - `page`: `number` (opsional, default: 1)
+    - `limit`: `number` (opsional, default: 10)
+    - `orderBy`: `string` (opsional, contoh: `created_at_desc`. Default: `created_at_desc`)
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "list": [
+        {
+          "id": "string",
+          "booking_id": "string",
+          "payment_method_id": "string",
+          "payment_date": "string",
+          "payment_amount": "number",
+          "payment_proof": "string",
+          "status": "pending" | "approved" | "rejected",
+          "is_approved": "boolean",
+          "approved_by": "string (opsional)",
+          "approved_at": "string (opsional)",
+          "created_at": "string",
+          "updated_at": "string",
+          "payment_method": {
+            "id": "string",
+            "name": "string",
+            "provider": "string",
+            "type": "string",
+            "account_number": "string",
+            "account_name": "string",
+            "is_active": "boolean",
+            "created_at": "string",
+            "updated_at": "string"
+          },
+          "booking": {
+            "id": "string",
+            "user_id": "string",
+            "package_schedule_id": "string",
+            "booking_date": "string",
+            "number_of_seats": "number",
+            "total_price": "number",
+            "payment_status": "string",
+            "notes": "string",
+            "created_at": "string",
+            "updated_at": "string"
+          }
+        }
+      ],
+      "total": "number",
+      "page": "number",
+      "limit": "number"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to fetch payments"
+    }
+    ```
+
+#### 1.6.2. Detail Pembayaran
+
+- **Deskripsi:** Mendapatkan detail satu pembayaran berdasarkan ID.
+- **Endpoint:** `/api/user/payments/:id`
+- **Metode:** `GET`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Params:**
+    - `id`: `string` (ID pembayaran)
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "data": {
+        "id": "string",
+        "booking_id": "string",
+        "payment_method_id": "string",
+        "payment_date": "string",
+        "payment_amount": "number",
+        "payment_proof": "string",
+        "status": "pending" | "approved" | "rejected",
+        "is_approved": "boolean",
+        "approved_by": "string (opsional)",
+        "approved_at": "string (opsional)",
+        "created_at": "string",
+        "updated_at": "string",
+        "payment_method": {
+          "id": "string",
+          "name": "string",
+          "provider": "string",
+          "type": "string",
+          "account_number": "string",
+          "account_name": "string",
+          "is_active": "boolean",
+          "created_at": "string",
+          "updated_at": "string"
+        },
+        "booking": {
+          "id": "string",
+          "user_id": "string",
+          "package_schedule_id": "string",
+          "booking_date": "string",
+          "number_of_seats": "number",
+          "total_price": "number",
+          "payment_status": "string",
+          "notes": "string",
+          "created_at": "string",
+          "updated_at": "string"
+        }
+      }
+    }
+    ```
+  - **403 Forbidden:** Jika pembayaran bukan milik pengguna.
+    ```json
+    {
+      "msg": "Unauthorized to view this payment"
+    }
+    ```
+  - **404 Not Found:** Jika pembayaran tidak ditemukan.
+    ```json
+    {
+      "msg": "Payment not found"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to fetch payment details"
+    }
+    ```
+
+#### 1.6.3. Buat Pembayaran
+
+- **Deskripsi:** Membuat pembayaran baru untuk sebuah pemesanan.
+- **Endpoint:** `/api/user/payments`
+- **Metode:** `POST`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Body:**
+    ```json
+    {
+      "booking_id": "string (required)",
+      "payment_method_id": "string (required)",
+      "amount": "number (required)",
+      "payment_proof": "string (base64, required)"
+    }
+    ```
+- **Response:**
+  - **201 Created:**
+    ```json
+    {
+      "msg": "Payment created successfully",
+      "data": {
+        "id": "string",
+        "booking_id": "string",
+        "payment_method_id": "string",
+        "payment_date": "string",
+        "payment_amount": "number",
+        "payment_proof": "string",
+        "status": "pending",
+        "is_approved": "boolean",
+        "created_at": "string",
+        "updated_at": "string"
+      }
+    }
+    ```
+  - **400 Bad Request:** Jika input tidak valid (misal: field yang diperlukan tidak ada, atau metode pembayaran tidak valid/tidak aktif).
+    ```json
+    {
+      "msg": "All fields are required"
+    }
+    ```
+  - **403 Forbidden:** Jika pemesanan bukan milik pengguna.
+    ```json
+    {
+      "msg": "Unauthorized to pay for this booking"
+    }
+    ```
+  - **404 Not Found:** Jika pemesanan tidak ditemukan.
+    ```json
+    {
+      "msg": "Booking not found"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to create payment"
+    }
+    ```
+
+---
+
+## 2. Grup Admin (Memerlukan Autentikasi Admin)
+
+Semua rute di bawah ini memerlukan header `Authorization: Bearer <token>` dengan token JWT admin.
+
+### 2.1. Pengguna
+
+#### 2.1.1. Daftar Pengguna
+
+- **Deskripsi:** Mendapatkan daftar semua pengguna.
+- **Endpoint:** `/api/admin/users/list`
+- **Metode:** `GET`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Query Params:**
+    - `page`: `number` (opsional, default: 1)
+    - `limit`: `number` (opsional, default: 10)
+    - `id`: `string` (opsional, filter berdasarkan ID)
+    - `name`: `string` (opsional, filter berdasarkan nama)
+    - `email`: `string` (opsional, filter berdasarkan email)
+    - `phone`: `string` (opsional, filter berdasarkan telepon)
+    - `role`: `string` (opsional, filter berdasarkan peran)
+    - `orderBy`: `string` (opsional, contoh: `name_asc`, `email_desc`. Default: `name_asc`)
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "list": [
+        {
+          "no": "number",
+          "id": "string",
+          "name": "string",
+          "image_id": "string",
+          "email": "string",
+          "phone": "string",
+          "role": "admin" | "customer" | "user",
+          "created_at": "string",
+          "updated_at": "string"
+        }
+      ],
+      "total": "number",
+      "page": "number",
+      "limit": "number"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to fetch users"
+    }
+    ```
+
+#### 2.1.2. Buat Pengguna
+
+- **Deskripsi:** Membuat pengguna baru.
+- **Endpoint:** `/api/admin/users`
+- **Metode:** `POST`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`, `Content-Type: application/json`
+  - **Body:**
+    ```json
+    {
+      "name": "string (required)",
+      "email": "string (required)",
+      "password": "string (required)",
+      "phone": "string (required)",
+      "role": "admin" | "customer" | "user" (required)
+    }
+    ```
+- **Response:**
+  - **201 Created:**
+    ```json
+    {
+      "msg": "User created successfully",
+      "data": {
+        "name": "string",
+        "image_id": "string",
+        "email": "string",
+        "password": "string (hashed)",
+        "phone": "string",
+        "role": "string"
+      }
+    }
+    ```
+  - **400 Bad Request:** Jika ada field yang tidak diisi, email sudah ada, atau nomor telepon sudah ada.
+    ```json
+    {
+      "msg": "All fields are required"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to create user"
+    }
+    ```
+
+#### 2.1.3. Perbarui Pengguna
+
+- **Deskripsi:** Memperbarui detail pengguna berdasarkan ID.
+- **Endpoint:** `/api/admin/users/:id`
+- **Metode:** `PUT`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`, `Content-Type: application/json`
+  - **Params:**
+    - `id`: `string` (ID pengguna)
+  - **Body:**
+    ```json
+    {
+      "name": "string (opsional)",
+      "email": "string (opsional)",
+      "password": "string (opsional)",
+      "phone": "string (opsional)",
+      "role": "admin" | "customer" | "user" (opsional),
+      "image": "string (base64, opsional)"
+    }
+    ```
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "msg": "User updated successfully",
+      "data": {
+        "id": "string",
+        "name": "string",
+        "image_id": "string",
+        "email": "string",
+        "password": "string (hashed)",
+        "phone": "string",
+        "role": "string",
+        "created_at": "string",
+        "updated_at": "string"
+      }
+    }
+    ```
+  - **404 Not Found:** Jika pengguna tidak ditemukan.
+    ```json
+    {
+      "msg": "User not found"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to update user"
+    }
+    ```
+
+#### 2.1.4. Hapus Pengguna
+
+- **Deskripsi:** Menghapus pengguna berdasarkan ID.
+- **Endpoint:** `/api/admin/users/:id`
+- **Metode:** `DELETE`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Params:**
+    - `id`: `string` (ID pengguna)
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "msg": "User deleted successfully"
+    }
+    ```
+  - **404 Not Found:** Jika pengguna tidak ditemukan.
+    ```json
+    {
+      "msg": "User not found"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to delete user"
+    }
+    ```
+
+### 2.2. Destinasi
+
+#### 2.2.1. Daftar Destinasi
+
+- **Deskripsi:** Mendapatkan daftar semua destinasi.
+- **Endpoint:** `/api/admin/destination/list`
+- **Metode:** `GET`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Query Params:**
+    - `page`: `number` (opsional, default: 1)
+    - `limit`: `number` (opsional, default: 10)
+    - `id`: `string` (opsional, filter berdasarkan ID)
+    - `name`: `string` (opsional, filter berdasarkan nama)
+    - `slug`: `string` (opsional, filter berdasarkan slug)
+    - `category`: `string` (opsional, filter berdasarkan kategori)
+    - `city`: `string` (opsional, filter berdasarkan kota)
+    - `province`: `string` (opsional, filter berdasarkan provinsi)
+    - `country`: `string` (opsional, filter berdasarkan negara)
+    - `is_active`: `boolean` (opsional, filter berdasarkan status aktif)
+    - `orderBy`: `string` (opsional, contoh: `name_asc`, `popularity_desc`. Default: `name_asc`)
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "list": [
+        {
+          "no": "number",
+          "id": "string",
+          "name": "string",
+          "slug": "string",
+          "description": "string",
+          "location_point": "string",
+          "province": "string",
+          "city": "string",
+          "country": "string",
+          "category": "string",
+          "popularity": "number",
+          "featured": "boolean",
+          "image_id": "string",
+          "gallery": "string",
+          "average_rating": "number",
+          "review_count": "number",
+          "is_active": "boolean",
+          "meta_keywords": "string",
+          "meta_description": "string",
+          "created_at": "string",
+          "updated_at": "string"
+        }
+      ],
+      "total": "number",
+      "page": "number",
+      "limit": "number"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to fetch destinations"
+    }
+    ```
+
+#### 2.2.2. Buat Destinasi
+
+- **Deskripsi:** Membuat destinasi baru.
+- **Endpoint:** `/api/admin/destination`
+- **Metode:** `POST`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`, `Content-Type: application/json`
+  - **Body:**
+    ```json
+    {
+      "name": "string (required)",
+      "slug": "string (required)",
+      "description": "string (required)",
+      "location_point": "string (opsional)",
+      "province": "string (opsional)",
+      "city": "string (opsional)",
+      "country": "string (opsional, default: Indonesia)",
+      "category": "string (required)",
+      "featured": "boolean (opsional, default: false)",
+      "gallery": "string (opsional, default: [])",
+      "meta_keywords": "string (opsional)",
+      "meta_description": "string (opsional)",
+      "image": "string (base64, opsional)"
+    }
+    ```
+- **Response:**
+  - **201 Created:**
+    ```json
+    {
+      "msg": "Destination created successfully",
+      "data": {
+        "id": "string",
+        "name": "string",
+        "slug": "string",
+        "description": "string",
+        "location_point": "string",
+        "province": "string",
+        "city": "string",
+        "country": "string",
+        "category": "string",
+        "popularity": "number",
+        "featured": "boolean",
+        "image_id": "string",
+        "gallery": "string",
+        "average_rating": "number",
+        "review_count": "number",
+        "is_active": "boolean",
+        "meta_keywords": "string",
+        "meta_description": "string"
+      }
+    }
+    ```
+  - **400 Bad Request:** Jika field yang diperlukan tidak ada, nama destinasi sudah ada, atau slug sudah diambil.
+    ```json
+    {
+      "msg": "Name, slug, description, and category are required"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to create destination"
+    }
+    ```
+
+#### 2.2.3. Perbarui Destinasi
+
+- **Deskripsi:** Memperbarui detail destinasi berdasarkan ID.
+- **Endpoint:** `/api/admin/destination/:id`
+- **Metode:** `PUT`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`, `Content-Type: application/json`
+  - **Params:**
+    - `id`: `string` (ID destinasi)
+  - **Body:**
+    ```json
+    {
+      "name": "string (opsional)",
+      "slug": "string (opsional)",
+      "description": "string (opsional)",
+      "location_point": "string (opsional)",
+      "province": "string (opsional)",
+      "city": "string (opsional)",
+      "country": "string (opsional)",
+      "category": "string (opsional)",
+      "featured": "boolean (opsional)",
+      "gallery": "string (opsional)",
+      "meta_keywords": "string (opsional)",
+      "meta_description": "string (opsional)",
+      "is_active": "boolean (opsional)",
+      "image": "string (base64, opsional)"
+    }
+    ```
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "msg": "Destination updated successfully",
+      "data": {
+        "id": "string",
+        "name": "string",
+        "slug": "string",
+        "description": "string",
+        "location_point": "string",
+        "province": "string",
+        "city": "string",
+        "country": "string",
+        "category": "string",
+        "popularity": "number",
+        "featured": "boolean",
+        "image_id": "string",
+        "gallery": "string",
+        "average_rating": "number",
+        "review_count": "number",
+        "is_active": "boolean",
+        "meta_keywords": "string",
+        "meta_description": "string",
+        "created_at": "string",
+        "updated_at": "string"
+      }
+    }
+    ```
+  - **404 Not Found:** Jika destinasi tidak ditemukan.
+    ```json
+    {
+      "msg": "Destination not found"
+    }
+    ```
+  - **400 Bad Request:** Jika slug sudah diambil.
+    ```json
+    {
+      "msg": "Slug already taken"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to update destination"
+    }
+    ```
+
+#### 2.2.4. Hapus Destinasi
+
+- **Deskripsi:** Menghapus destinasi berdasarkan ID.
+- **Endpoint:** `/api/admin/destination/:id`
+- **Metode:** `DELETE`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Params:**
+    - `id`: `string` (ID destinasi)
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "msg": "Destination deleted successfully"
+    }
+    ```
+  - **404 Not Found:** Jika destinasi tidak ditemukan.
+    ```json
+    {
+      "msg": "Destination not found"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to delete destination"
+    }
+    ```
+
+### 2.3. Paket
+
+#### 2.3.1. Daftar Paket
+
+- **Deskripsi:** Mendapatkan daftar semua paket perjalanan.
+- **Endpoint:** `/api/admin/packages/list`
+- **Metode:** `GET`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Query Params:**
+    - `page`: `number` (opsional, default: 1)
+    - `limit`: `number` (opsional, default: 10)
+    - `id`: `string` (opsional, filter berdasarkan ID)
+    - `name`: `string` (opsional, filter berdasarkan nama)
+    - `destination_ids`: `string[]` (opsional, filter berdasarkan ID destinasi)
+    - `orderBy`: `string` (opsional, contoh: `name_asc`, `price_desc`. Default: `name_asc`)
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "list": [
+        {
+          "no": "number",
+          "id": "string",
+          "name": "string",
+          "description": "string",
+          "destination_ids": ["string"],
+          "price": "number",
+          "created_at": "string",
+          "updated_at": "string",
+          "destinations": [
+            {
+              "id": "string",
+              "name": "string",
+              "slug": "string",
+              "description": "string",
+              "location_point": "string",
+              "province": "string",
+              "city": "string",
+              "country": "string",
+              "category": "string",
+              "popularity": "number",
+              "featured": "boolean",
+              "image_id": "string",
+              "gallery": "string",
+              "average_rating": "number",
+              "review_count": "number",
+              "is_active": "boolean",
+              "meta_keywords": "string",
+              "meta_description": "string",
+              "created_at": "string",
+              "updated_at": "string"
+            }
+          ]
+        }
+      ],
+      "total": "number",
+      "page": "number",
+      "limit": "number"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to fetch packages"
+    }
+    ```
+
+#### 2.3.2. Buat Paket
+
+- **Deskripsi:** Membuat paket perjalanan baru.
+- **Endpoint:** `/api/admin/packages`
+- **Metode:** `POST`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`, `Content-Type: application/json`
+  - **Body:**
+    ```json
+    {
+      "name": "string (required)",
+      "description": "string (required)",
+      "destination_ids": ["string (required, array tidak boleh kosong)"],
+      "price": "number (required)"
+    }
+    ```
+- **Response:**
+  - **201 Created:**
+    ```json
+    {
+      "msg": "Package created successfully",
+      "data": {
+        "name": "string",
+        "description": "string",
+        "destination_ids": ["string"],
+        "price": "number",
+        "created_at": "string",
+        "updated_at": "string"
+      }
+    }
+    ```
+  - **400 Bad Request:** Jika field yang diperlukan tidak ada, atau `destination_ids` kosong/bukan array.
+    ```json
+    {
+      "msg": "All fields are required, destination_ids harus array dan tidak kosong"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to create package"
+    }
+    ```
+
+#### 2.3.3. Perbarui Paket
+
+- **Deskripsi:** Memperbarui detail paket perjalanan berdasarkan ID.
+- **Endpoint:** `/api/admin/packages/:id`
+- **Metode:** `PUT`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`, `Content-Type: application/json`
+  - **Params:**
+    - `id`: `string` (ID paket)
+  - **Body:**
+    ```json
+    {
+      "name": "string (opsional)",
+      "description": "string (opsional)",
+      "destination_ids": ["string (opsional, array tidak boleh kosong)"],
+      "price": "number (opsional)"
+    }
+    ```
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "msg": "Package updated successfully",
+      "data": {
+        "id": "string",
+        "name": "string",
+        "description": "string",
+        "destination_ids": ["string"],
+        "price": "number",
+        "created_at": "string",
+        "updated_at": "string"
+      }
+    }
+    ```
+  - **404 Not Found:** Jika paket tidak ditemukan.
+    ```json
+    {
+      "msg": "Package not found"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to update package"
+    }
+    ```
+
+#### 2.3.4. Hapus Paket
+
+- **Deskripsi:** Menghapus paket perjalanan berdasarkan ID.
+- **Endpoint:** `/api/admin/packages/:id`
+- **Metode:** `DELETE`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Params:**
+    - `id`: `string` (ID paket)
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "msg": "Package deleted successfully"
+    }
+    ```
+  - **404 Not Found:** Jika paket tidak ditemukan.
+    ```json
+    {
+      "msg": "Package not found"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to delete package"
+    }
+    ```
+
+### 2.4. Armada
+
+#### 2.4.1. Daftar Armada
+
+- **Deskripsi:** Mendapatkan daftar semua armada.
+- **Endpoint:** `/api/admin/fleets/list`
+- **Metode:** `GET`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Query Params:**
+    - `page`: `number` (opsional, default: 1)
+    - `limit`: `number` (opsional, default: 10)
+    - `id`: `string` (opsional, filter berdasarkan ID)
+    - `name`: `string` (opsional, filter berdasarkan nama)
+    - `type`: `string` (opsional, filter berdasarkan tipe)
+    - `status`: `string` (opsional, filter berdasarkan status: `available`, `in_use`, `maintenance`)
+    - `orderBy`: `string` (opsional, contoh: `name_asc`, `capacity_desc`. Default: `name_asc`)
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "list": [
+        {
+          "no": "number",
+          "id": "string",
+          "name": "string",
+          "type": "string",
+          "plate_number": "string",
+          "capacity": "number",
+          "driver_name": "string",
+          "status": "available" | "in_use" | "maintenance",
+          "created_at": "string",
+          "updated_at": "string"
+        }
+      ],
+      "total": "number",
+      "page": "number",
+      "limit": "number"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to fetch fleets"
+    }
+    ```
+
+#### 2.4.2. Buat Armada
+
+- **Deskripsi:** Membuat armada baru.
+- **Endpoint:** `/api/admin/fleets`
+- **Metode:** `POST`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`, `Content-Type: application/json`
+  - **Body:**
+    ```json
+    {
+      "name": "string (required)",
+      "type": "string (required)",
+      "plate_number": "string (required)",
+      "capacity": "number (required)",
+      "driver_name": "string (required)",
+      "status": "available" | "in_use" | "maintenance" (required)
+    }
+    ```
+- **Response:**
+  - **201 Created:**
+    ```json
+    {
+      "msg": "Fleet created successfully",
+      "data": {
+        "name": "string",
+        "type": "string",
+        "plate_number": "string",
+        "capacity": "number",
+        "driver_name": "string",
+        "status": "string"
+      }
+    }
+    ```
+  - **400 Bad Request:** Jika field yang diperlukan tidak ada.
+    ```json
+    {
+      "msg": "All fields are required"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to create fleet"
+    }
+    ```
+
+#### 2.4.3. Perbarui Armada
+
+- **Deskripsi:** Memperbarui detail armada berdasarkan ID.
+- **Endpoint:** `/api/admin/fleets/:id`
+- **Metode:** `PUT`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`, `Content-Type: application/json`
+  - **Params:**
+    - `id`: `string` (ID armada)
+  - **Body:**
+    ```json
+    {
+      "name": "string (opsional)",
+      "type": "string (opsional)",
+      "plate_number": "string (opsional)",
+      "capacity": "number (opsional)",
+      "driver_name": "string (opsional)",
+      "status": "available" | "in_use" | "maintenance" (opsional)
+    }
+    ```
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "msg": "Fleet updated successfully",
+      "data": {
+        "id": "string",
+        "name": "string",
+        "type": "string",
+        "plate_number": "string",
+        "capacity": "number",
+        "driver_name": "string",
+        "status": "string",
+        "created_at": "string",
+        "updated_at": "string"
+      }
+    }
+    ```
+  - **404 Not Found:** Jika armada tidak ditemukan.
+    ```json
+    {
+      "msg": "Fleet not found"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to update fleet"
+    }
+    ```
+
+#### 2.4.4. Hapus Armada
+
+- **Deskripsi:** Menghapus armada berdasarkan ID.
+- **Endpoint:** `/api/admin/fleets/:id`
+- **Metode:** `DELETE`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Params:**
+    - `id`: `string` (ID armada)
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "msg": "Fleet deleted successfully"
+    }
+    ```
+  - **404 Not Found:** Jika armada tidak ditemukan.
+    ```json
+    {
+      "msg": "Fleet not found"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to delete fleet"
+    }
+    ```
+
+### 2.5. Jadwal Paket
+
+#### 2.5.1. Daftar Jadwal Paket
+
+- **Deskripsi:** Mendapatkan daftar semua jadwal paket.
+- **Endpoint:** `/api/admin/packagespackages/list`
+- **Metode:** `GET`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Query Params:**
+    - `page`: `number` (opsional, default: 1)
+    - `limit`: `number` (opsional, default: 10)
+    - `id`: `string` (opsional, filter berdasarkan ID)
+    - `package_id`: `string` (opsional, filter berdasarkan ID paket)
+    - `fleet_id`: `string` (opsional, filter berdasarkan ID armada)
+    - `departure_date`: `string` (opsional, filter berdasarkan tanggal keberangkatan)
+    - `orderBy`: `string` (opsional, contoh: `departure_date_asc`, `available_seats_desc`. Default: `departure_date_asc`)
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "list": [
+        {
+          "no": "number",
+          "package": {
+            "id": "string",
+            "name": "string",
+            "description": "string",
+            "destination_ids": ["string"],
+            "price": "number",
+            "created_at": "string",
+            "updated_at": "string",
+            "destinations": [
+              {
+                "id": "string",
+                "name": "string",
+                "slug": "string",
+                "description": "string",
+                "location_point": "string",
+                "province": "string",
+                "city": "string",
+                "country": "string",
+                "category": "string",
+                "popularity": "number",
+                "featured": "boolean",
+                "image_id": "string",
+                "gallery": "string",
+                "average_rating": "number",
+                "review_count": "number",
+                "is_active": "boolean",
+                "meta_keywords": "string",
+                "meta_description": "string",
+                "created_at": "string",
+                "updated_at": "string"
+              }
+            ]
+          },
+          "fleet": {
+            "id": "string",
+            "name": "string",
+            "type": "string",
+            "plate_number": "string",
+            "capacity": "number",
+            "driver_name": "string",
+            "status": "string",
+            "created_at": "string",
+            "updated_at": "string"
+          },
+          "id": "string",
+          "package_id": "string",
+          "fleet_id": "string",
+          "departure_date": "string",
+          "return_date": "string",
+          "departure_time": "string",
+          "available_seats": "number",
+          "created_at": "string",
+          "updated_at": "string"
+        }
+      ],
+      "total": "number",
+      "page": "number",
+      "limit": "number"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to fetch package schedules"
+    }
+    ```
+
+#### 2.5.2. Buat Jadwal Paket
+
+- **Deskripsi:** Membuat jadwal paket baru.
+- **Endpoint:** `/api/admin/packagespackages`
+- **Metode:** `POST`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`, `Content-Type: application/json`
+  - **Body:**
+    ```json
+    {
+      "package_id": "string (required)",
+      "fleet_id": "string (required)",
+      "departure_date": "string (required, format YYYY-MM-DD)",
+      "return_date": "string (required, format YYYY-MM-DD)",
+      "departure_time": "string (required, format HH:MM)",
+      "available_seats": "number (required)"
+    }
+    ```
+- **Response:**
+  - **201 Created:**
+    ```json
+    {
+      "msg": "Package schedule created successfully",
+      "data": {
+        "package_id": "string",
+        "fleet_id": "string",
+        "departure_date": "string",
+        "return_date": "string",
+        "departure_time": "string",
+        "available_seats": "number"
+      }
+    }
+    ```
+  - **400 Bad Request:** Jika field yang diperlukan tidak ada.
+    ```json
+    {
+      "msg": "All fields are required"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to create package schedule"
+    }
+    ```
+
+#### 2.5.3. Perbarui Jadwal Paket
+
+- **Deskripsi:** Memperbarui detail jadwal paket berdasarkan ID.
+- **Endpoint:** `/api/admin/packagespackages/:id`
+- **Metode:** `PUT`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`, `Content-Type: application/json`
+  - **Params:**
+    - `id`: `string` (ID jadwal paket)
+  - **Body:**
+    ```json
+    {
+      "package_id": "string (opsional)",
+      "fleet_id": "string (opsional)",
+      "departure_date": "string (opsional, format YYYY-MM-DD)",
+      "return_date": "string (opsional, format YYYY-MM-DD)",
+      "departure_time": "string (opsional, format HH:MM)",
+      "available_seats": "number (opsional)"
+    }
+    ```
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "msg": "Package schedule updated successfully",
+      "data": {
+        "id": "string",
+        "package_id": "string",
+        "fleet_id": "string",
+        "departure_date": "string",
+        "return_date": "string",
+        "departure_time": "string",
+        "available_seats": "number",
+        "created_at": "string",
+        "updated_at": "string"
+      }
+    }
+    ```
+  - **404 Not Found:** Jika jadwal paket tidak ditemukan.
+    ```json
+    {
+      "msg": "Package schedule not found"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to update package schedule"
+    }
+    ```
+
+#### 2.5.4. Hapus Jadwal Paket
+
+- **Deskripsi:** Menghapus jadwal paket berdasarkan ID.
+- **Endpoint:** `/api/admin/packagespackages/:id`
+- **Metode:** `DELETE`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Params:**
+    - `id`: `string` (ID jadwal paket)
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "msg": "Package schedule deleted successfully"
+    }
+    ```
+  - **404 Not Found:** Jika jadwal paket tidak ditemukan.
+    ```json
+    {
+      "msg": "Package schedule not found"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to delete package schedule"
+    }
+    ```
+
+### 2.6. Pemesanan (Bookings)
+
+#### 2.6.1. Daftar Pemesanan
+
+- **Deskripsi:** Mendapatkan daftar semua pemesanan.
+- **Endpoint:** `/api/admin/bookings/list`
+- **Metode:** `GET`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Query Params:**
+    - `page`: `number` (opsional, default: 1)
+    - `limit`: `number` (opsional, default: 10)
+    - `id`: `string` (opsional, filter berdasarkan ID)
+    - `user_id`: `string` (opsional, filter berdasarkan ID pengguna)
+    - `package_schedule_id`: `string` (opsional, filter berdasarkan ID jadwal paket)
+    - `payment_status`: `string` (opsional, filter berdasarkan status pembayaran: `pending`, `paid`, `cancelled`)
+    - `orderBy`: `string` (opsional, contoh: `booking_date_asc`, `total_price_desc`. Default: `booking_date_asc`)
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "list": [
+        {
+          "no": "number",
+          "id": "string",
+          "user_id": "string",
+          "package_schedule_id": "string",
+          "booking_date": "string",
+          "number_of_seats": "number",
+          "total_price": "number",
+          "payment_status": "pending" | "paid" | "cancelled",
+          "notes": "string",
+          "created_at": "string",
+          "updated_at": "string",
+          "user": {
+            "id": "string",
+            "name": "string",
+            "image_id": "string",
+            "email": "string",
+            "phone": "string",
+            "role": "string",
+            "created_at": "string",
+            "updated_at": "string"
+          },
+          "schedule": {
+            "id": "string",
+            "package_id": "string",
+            "fleet_id": "string",
+            "departure_date": "string",
+            "return_date": "string",
+            "departure_time": "string",
+            "available_seats": "number",
+            "created_at": "string",
+            "updated_at": "string",
+            "package": {
+              "id": "string",
+              "name": "string",
+              "description": "string",
+              "destination_ids": ["string"],
+              "price": "number",
+              "created_at": "string",
+              "updated_at": "string"
+            }
+          }
+        }
+      ],
+      "total": "number",
+      "page": "number",
+      "limit": "number"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to fetch bookings"
+    }
+    ```
+
+#### 2.6.2. Buat Pemesanan
+
+- **Deskripsi:** Membuat pemesanan baru.
+- **Endpoint:** `/api/admin/bookings`
+- **Metode:** `POST`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`, `Content-Type: application/json`
+  - **Body:**
+    ```json
+    {
+      "user_id": "string (required)",
+      "package_schedule_id": "string (required)",
+      "booking_date": "string (required, format YYYY-MM-DDTHH:MM:SS.sssZ)",
+      "number_of_seats": "number (required)",
+      "total_price": "number (required)",
+      "payment_status": "pending" | "paid" | "cancelled" (required),
+      "notes": "string (opsional)"
+    }
+    ```
+- **Response:**
+  - **201 Created:**
+    ```json
+    {
+      "msg": "Booking created successfully",
+      "data": {
+        "user_id": "string",
+        "package_schedule_id": "string",
+        "booking_date": "string",
+        "number_of_seats": "number",
+        "total_price": "number",
+        "payment_status": "string"
+      }
+    }
+    ```
+  - **400 Bad Request:** Jika field yang diperlukan tidak ada.
+    ```json
+    {
+      "msg": "All fields are required"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to create booking"
+    }
+    ```
+
+#### 2.6.3. Perbarui Pemesanan
+
+- **Deskripsi:** Memperbarui detail pemesanan berdasarkan ID.
+- **Endpoint:** `/api/admin/bookings/:id`
+- **Metode:** `PUT`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`, `Content-Type: application/json`
+  - **Params:**
+    - `id`: `string` (ID pemesanan)
+  - **Body:**
+    ```json
+    {
+      "user_id": "string (opsional)",
+      "package_schedule_id": "string (opsional)",
+      "booking_date": "string (opsional, format YYYY-MM-DDTHH:MM:SS.sssZ)",
+      "number_of_seats": "number (opsional)",
+      "total_price": "number (opsional)",
+      "payment_status": "pending" | "paid" | "cancelled" (opsional),
+      "notes": "string (opsional)"
+    }
+    ```
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "msg": "Booking updated successfully",
+      "data": {
+        "id": "string",
+        "user_id": "string",
+        "package_schedule_id": "string",
+        "booking_date": "string",
+        "number_of_seats": "number",
+        "total_price": "number",
+        "payment_status": "string",
+        "notes": "string",
+        "created_at": "string",
+        "updated_at": "string"
+      }
+    }
+    ```
+  - **404 Not Found:** Jika pemesanan tidak ditemukan.
+    ```json
+    {
+      "msg": "Booking not found"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to update booking"
+    }
+    ```
+
+#### 2.6.4. Hapus Pemesanan
+
+- **Deskripsi:** Menghapus pemesanan berdasarkan ID.
+- **Endpoint:** `/api/admin/bookings/:id`
+- **Metode:** `DELETE`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Params:**
+    - `id`: `string` (ID pemesanan)
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "msg": "Booking deleted successfully"
+    }
+    ```
+  - **404 Not Found:** Jika pemesanan tidak ditemukan.
+    ```json
+    {
+      "msg": "Booking not found"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to delete booking"
+    }
+    ```
+
+### 2.7. Metode Pembayaran
+
+#### 2.7.1. Daftar Metode Pembayaran
+
+- **Deskripsi:** Mendapatkan daftar semua metode pembayaran.
+- **Endpoint:** `/api/admin/paymentmetodes/list`
+- **Metode:** `GET`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Query Params:**
+    - `page`: `number` (opsional, default: 1)
+    - `limit`: `number` (opsional, default: 10)
+    - `id`: `string` (opsional, filter berdasarkan ID)
+    - `type`: `string` (opsional, filter berdasarkan tipe: `virtual_account`, `bank_transfer`, `e_wallet`)
+    - `is_active`: `boolean` (opsional, filter berdasarkan status aktif)
+    - `orderBy`: `string` (opsional, contoh: `name_asc`, `created_at_desc`. Default: `created_at_desc`)
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "list": [
+        {
+          "id": "string",
+          "name": "string",
+          "provider": "string",
+          "type": "virtual_account" | "bank_transfer" | "e_wallet",
+          "account_number": "string",
+          "account_name": "string",
+          "is_active": "boolean",
+          "created_at": "string",
+          "updated_at": "string"
+        }
+      ],
+      "total": "number",
+      "page": "number",
+      "limit": "number"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to fetch payment methods"
+    }
+    ```
+
+#### 2.7.2. Buat Metode Pembayaran
+
+- **Deskripsi:** Membuat metode pembayaran baru.
+- **Endpoint:** `/api/admin/paymentmetodes`
+- **Metode:** `POST`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`, `Content-Type: application/json`
+  - **Body:**
+    ```json
+    {
+      "name": "string (required)",
+      "provider": "string (required)",
+      "type": "virtual_account" | "bank_transfer" | "e_wallet" (required),
+      "account_number": "string (required)",
+      "account_name": "string (required)",
+      "is_active": "boolean (opsional, default: true)"
+    }
+    ```
+- **Response:**
+  - **201 Created:**
+    ```json
+    {
+      "msg": "Payment method created successfully",
+      "data": {
+        "name": "string",
+        "provider": "string",
+        "type": "string",
+        "account_number": "string",
+        "account_name": "string",
+        "is_active": "boolean"
+      }
+    }
+    ```
+  - **400 Bad Request:** Jika field yang diperlukan tidak ada.
+    ```json
+    {
+      "msg": "All fields are required"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to create payment method"
+    }
+    ```
+
+#### 2.7.3. Perbarui Metode Pembayaran
+
+- **Deskripsi:** Memperbarui detail metode pembayaran berdasarkan ID.
+- **Endpoint:** `/api/admin/paymentmetodes/:id`
+- **Metode:** `PUT`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`, `Content-Type: application/json`
+  - **Params:**
+    - `id`: `string` (ID metode pembayaran)
+  - **Body:**
+    ```json
+    {
+      "name": "string (opsional)",
+      "provider": "string (opsional)",
+      "type": "virtual_account" | "bank_transfer" | "e_wallet" (opsional),
+      "account_number": "string (opsional)",
+      "account_name": "string (opsional)",
+      "is_active": "boolean (opsional)"
+    }
+    ```
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "msg": "Payment method updated successfully",
+      "data": {
+        "id": "string",
+        "name": "string",
+        "provider": "string",
+        "type": "string",
+        "account_number": "string",
+        "account_name": "string",
+        "is_active": "boolean",
+        "created_at": "string",
+        "updated_at": "string"
+      }
+    }
+    ```
+  - **404 Not Found:** Jika metode pembayaran tidak ditemukan.
+    ```json
+    {
+      "msg": "Payment method not found"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to update payment method"
+    }
+    ```
+
+#### 2.7.4. Hapus Metode Pembayaran
+
+- **Deskripsi:** Menghapus metode pembayaran berdasarkan ID.
+- **Endpoint:** `/api/admin/paymentmetodes/:id`
+- **Metode:** `DELETE`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Params:**
+    - `id`: `string` (ID metode pembayaran)
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "msg": "Payment method deleted successfully"
+    }
+    ```
+  - **404 Not Found:** Jika metode pembayaran tidak ditemukan.
+    ```json
+    {
+      "msg": "Payment method not found"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to delete payment method"
+    }
+    ```
+
+### 2.8. Pembayaran
+
+#### 2.8.1. Daftar Pembayaran
+
+- **Deskripsi:** Mendapatkan daftar semua pembayaran.
+- **Endpoint:** `/api/admin/payments/list`
+- **Metode:** `GET`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Query Params:**
+    - `page`: `number` (opsional, default: 1)
+    - `limit`: `number` (opsional, default: 10)
+    - `id`: `string` (opsional, filter berdasarkan ID)
+    - `booking_id`: `string` (opsional, filter berdasarkan ID pemesanan)
+    - `payment_method_id`: `string` (opsional, filter berdasarkan ID metode pembayaran)
+    - `status`: `string` (opsional, filter berdasarkan status: `pending`, `approved`, `rejected`)
+    - `orderBy`: `string` (opsional, contoh: `payment_date_desc`, `payment_amount_asc`. Default: `payment_date_desc`)
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "list": [
+        {
+          "no": "number",
+          "id": "string",
+          "booking_id": "string",
+          "payment_method_id": "string",
+          "payment_date": "string",
+          "payment_amount": "number",
+          "payment_proof": "string",
+          "status": "pending" | "approved" | "rejected",
+          "is_approved": "boolean",
+          "approved_by": "string (opsional)",
+          "approved_at": "string (opsional)",
+          "created_at": "string",
+          "updated_at": "string",
+          "booking": {
+            "id": "string",
+            "user_id": "string",
+            "package_schedule_id": "string",
+            "booking_date": "string",
+            "number_of_seats": "number",
+            "total_price": "number",
+            "payment_status": "string",
+            "notes": "string",
+            "created_at": "string",
+            "updated_at": "string",
+            "user": {
+              "id": "string",
+              "name": "string",
+              "image_id": "string",
+              "email": "string",
+              "phone": "string",
+              "role": "string",
+              "created_at": "string",
+              "updated_at": "string"
+            },
+            "schedule": {
+              "id": "string",
+              "package_id": "string",
+              "fleet_id": "string",
+              "departure_date": "string",
+              "return_date": "string",
+              "departure_time": "string",
+              "available_seats": "number",
+              "created_at": "string",
+              "updated_at": "string",
+              "package": {
+                "id": "string",
+                "name": "string",
+                "description": "string",
+                "destination_ids": ["string"],
+                "price": "number",
+                "created_at": "string",
+                "updated_at": "string"
+              }
+            }
+          },
+          "payment_method": {
+            "id": "string",
+            "name": "string",
+            "provider": "string",
+            "type": "string",
+            "account_number": "string",
+            "account_name": "string",
+            "is_active": "boolean",
+            "created_at": "string",
+            "updated_at": "string"
+          }
+        }
+      ],
+      "total": "number",
+      "page": "number",
+      "limit": "number"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to fetch payments"
+    }
+    ```
+
+#### 2.8.2. Buat Pembayaran
+
+- **Deskripsi:** Membuat pembayaran baru.
+- **Endpoint:** `/api/admin/payments`
+- **Metode:** `POST`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`, `Content-Type: application/json`
+  - **Body:**
+    ```json
+    {
+      "booking_id": "string (required)",
+      "payment_date": "string (required, format YYYY-MM-DDTHH:MM:SS.sssZ)",
+      "payment_method_id": "string (required)",
+      "payment_amount": "number (required)",
+      "payment_proof": "string (required)"
+    }
+    ```
+- **Response:**
+  - **201 Created:**
+    ```json
+    {
+      "msg": "Payment created successfully",
+      "data": {
+        "booking_id": "string",
+        "payment_method_id": "string",
+        "payment_date": "string",
+        "payment_amount": "number",
+        "payment_proof": "string",
+        "status": "pending",
+        "is_approved": "boolean"
+      }
+    }
+    ```
+  - **400 Bad Request:** Jika field yang diperlukan tidak ada.
+    ```json
+    {
+      "msg": "All fields are required"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to create payment"
+    }
+    ```
+
+#### 2.8.3. Perbarui Pembayaran
+
+- **Deskripsi:** Memperbarui detail pembayaran berdasarkan ID.
+- **Endpoint:** `/api/admin/payments/:id`
+- **Metode:** `PUT`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`, `Content-Type: application/json`
+  - **Params:**
+    - `id`: `string` (ID pembayaran)
+  - **Body:**
+    ```json
+    {
+      "booking_id": "string (opsional)",
+      "payment_date": "string (opsional, format YYYY-MM-DDTHH:MM:SS.sssZ)",
+      "payment_method_id": "string (opsional)",
+      "payment_amount": "number (opsional)",
+      "payment_proof": "string (opsional)",
+      "status": "pending" | "approved" | "rejected" (opsional)"
+    }
+    ```
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "msg": "Payment updated successfully",
+      "data": {
+        "id": "string",
+        "booking_id": "string",
+        "payment_method_id": "string",
+        "payment_date": "string",
+        "payment_amount": "number",
+        "payment_proof": "string",
+        "status": "string",
+        "is_approved": "boolean",
+        "created_at": "string",
+        "updated_at": "string"
+      }
+    }
+    ```
+  - **404 Not Found:** Jika pembayaran tidak ditemukan.
+    ```json
+    {
+      "msg": "Payment not found"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to update payment"
+    }
+    ```
+
+#### 2.8.4. Hapus Pembayaran
+
+- **Deskripsi:** Menghapus pembayaran berdasarkan ID.
+- **Endpoint:** `/api/admin/payments/:id`
+- **Metode:** `DELETE`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Params:**
+    - `id`: `string` (ID pembayaran)
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "msg": "Payment deleted successfully"
+    }
+    ```
+  - **404 Not Found:** Jika pembayaran tidak ditemukan.
+    ```json
+    {
+      "msg": "Payment not found"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to delete payment"
+    }
+    ```
+
+#### 2.8.5. Setujui/Tolak Pembayaran
+
+- **Deskripsi:** Menyetujui atau menolak pembayaran.
+- **Endpoint:** `/api/admin/payments/:id/approve`
+- **Metode:** `PUT`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`, `Content-Type: application/json`
+  - **Params:**
+    - `id`: `string` (ID pembayaran)
+  - **Body:**
+    ```json
+    {
+      "admin_id": "string (required)",
+      "approved": "boolean (required)"
+    }
+    ```
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "msg": "Payment approved/rejected",
+      "data": {
+        "id": "string",
+        "booking_id": "string",
+        "payment_method_id": "string",
+        "payment_date": "string",
+        "payment_amount": "number",
+        "payment_proof": "string",
+        "status": "approved" | "rejected",
+        "is_approved": "boolean",
+        "approved_by": "string",
+        "approved_at": "string",
+        "created_at": "string",
+        "updated_at": "string"
+      }
+    }
+    ```
+  - **400 Bad Request:** Jika `admin_id` atau `approved` tidak disediakan.
+    ```json
+    {
+      "msg": "admin_id and approved flag are required"
+    }
+    ```
+  - **404 Not Found:** Jika pembayaran tidak ditemukan.
+    ```json
+    {
+      "msg": "Payment not found"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to approve payment"
+    }
+    ```
+
+### 2.9. Faktur
+
+#### 2.9.1. Daftar Faktur
+
+- **Deskripsi:** Mendapatkan daftar semua faktur.
+- **Endpoint:** `/api/admin/invoices/list`
+- **Metode:** `GET`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Query Params:**
+    - `page`: `number` (opsional, default: 1)
+    - `limit`: `number` (opsional, default: 10)
+    - `id`: `string` (opsional, filter berdasarkan ID)
+    - `booking_id`: `string` (opsional, filter berdasarkan ID pemesanan)
+    - `invoice_number`: `string` (opsional, filter berdasarkan nomor faktur)
+    - `status`: `string` (opsional, filter berdasarkan status: `paid`, `unpaid`, `overdue`)
+    - `orderBy`: `string` (opsional, contoh: `issued_date_desc`, `due_date_asc`. Default: `issued_date_desc`)
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "list": [
+        {
+          "no": "number",
+          "id": "string",
+          "booking_id": "string",
+          "invoice_number": "string",
+          "issued_date": "string",
+          "due_date": "string",
+          "status": "paid" | "unpaid" | "overdue",
+          "created_at": "string",
+          "updated_at": "string"
+        }
+      ],
+      "total": "number",
+      "page": "number",
+      "limit": "number"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to fetch invoices"
+    }
+    ```
+
+#### 2.9.2. Buat Faktur
+
+- **Deskripsi:** Membuat faktur baru.
+- **Endpoint:** `/api/admin/invoices`
+- **Metode:** `POST`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`, `Content-Type: application/json`
+  - **Body:**
+    ```json
+    {
+      "booking_id": "string (required)",
+      "invoice_number": "string (required)",
+      "issued_date": "string (required, format YYYY-MM-DDTHH:MM:SS.sssZ)",
+      "due_date": "string (required, format YYYY-MM-DDTHH:MM:SS.sssZ)",
+      "status": "paid" | "unpaid" | "overdue" (required)"
+    }
+    ```
+- **Response:**
+  - **201 Created:**
+    ```json
+    {
+      "msg": "Invoice created successfully",
+      "data": {
+        "booking_id": "string",
+        "invoice_number": "string",
+        "issued_date": "string",
+        "due_date": "string",
+        "status": "string",
+        "created_at": "string"
+      }
+    }
+    ```
+  - **400 Bad Request:** Jika field yang diperlukan tidak ada.
+    ```json
+    {
+      "msg": "All fields are required"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to create invoice"
+    }
+    ```
+
+#### 2.9.3. Perbarui Faktur
+
+- **Deskripsi:** Memperbarui detail faktur berdasarkan ID.
+- **Endpoint:** `/api/admin/invoices/:id`
+- **Metode:** `PUT`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`, `Content-Type: application/json`
+  - **Params:**
+    - `id`: `string` (ID faktur)
+  - **Body:**
+    ```json
+    {
+      "booking_id": "string (opsional)",
+      "invoice_number": "string (opsional)",
+      "issued_date": "string (opsional, format YYYY-MM-DDTHH:MM:SS.sssZ)",
+      "due_date": "string (opsional, format YYYY-MM-DDTHH:MM:SS.sssZ)",
+      "status": "paid" | "unpaid" | "overdue" (opsional)"
+    }
+    ```
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "msg": "Invoice updated successfully",
+      "data": {
+        "id": "string",
+        "booking_id": "string",
+        "invoice_number": "string",
+        "issued_date": "string",
+        "due_date": "string",
+        "status": "string",
+        "created_at": "string"
+      }
+    }
+    ```
+  - **404 Not Found:** Jika faktur tidak ditemukan.
+    ```json
+    {
+      "msg": "Invoice not found"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to update invoice"
+    }
+    ```
+
+#### 2.9.4. Hapus Faktur
+
+- **Deskripsi:** Menghapus faktur berdasarkan ID.
+- **Endpoint:** `/api/admin/invoices/:id`
+- **Metode:** `DELETE`
+- **Request:**
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Params:**
+    - `id`: `string` (ID faktur)
+- **Response:**
+  - **200 OK:**
+    ```json
+    {
+      "msg": "Invoice deleted successfully"
+    }
+    ```
+  - **404 Not Found:** Jika faktur tidak ditemukan.
+    ```json
+    {
+      "msg": "Invoice not found"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "msg": "Failed to delete invoice"
+    }
+    ```

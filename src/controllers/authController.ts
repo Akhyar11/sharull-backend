@@ -28,6 +28,11 @@ export const authController = {
         password: hashedPassword,
         phone,
         role: "customer",
+        image_id: "",
+        created_at: new Date().toISOString(),
+        reset_token: "",
+        reset_token_expires: "",
+        updated_at: new Date().toISOString(),
       };
 
       const createdUser = await userModel.create(newUser);
