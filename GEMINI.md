@@ -3,5 +3,5 @@
 
 untuk push ke git jalankan
 git add .
-git commit -m "[your message]"
+git commit -m "[your message one line]"
 git push

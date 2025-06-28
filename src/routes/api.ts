@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { userController } from "../controllers/usersController";
-import { authController } from "../controllers/adminAuthController";
+import { authController as adminAuthController } from "../controllers/adminAuthController";
+import { authController } from "../controllers/authController";
 import { adminAuthMiddleware } from "../middlewares/adminMiddleware";
 import { packageController } from "../controllers/packagesController";
 import { bookingController } from "../controllers/bookingsControllers";
@@ -22,7 +23,8 @@ class Route {
   }
 
   private initializeRoutes() {
-    this.router.post("/login", authController.login);
+    this.router.post("/login", adminAuthController.login);
+    this.router.post("/register", authController.register);
     this.router.get("/file-proxy/:id", imageController.listById);
     this.router.get("/file-proxy/fk/:id", imageController.listByFK);
     this.router.get(
