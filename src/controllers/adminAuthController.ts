@@ -28,12 +28,6 @@ class AuthController {
 
       const user = users[0];
 
-      // Cek apakah user role nya admin
-      if (user.role !== "admin") {
-        res.status(403).json({ msg: "Access denied, not an admin" });
-        return;
-      }
-
       // Bandingkan password
       const isMatch = await bcrypt.compare(password, user.password);
 
