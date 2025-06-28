@@ -130,8 +130,10 @@ class UserController {
         return;
       }
 
+      let imageData = users[0].image_id;
+
       if (image) {
-        await createImage(image as string, id);
+        imageData = await createImage(image as string, id);
       }
 
       const newPassword = password
@@ -145,6 +147,7 @@ class UserController {
         password: newPassword,
         phone: phone || users[0].phone,
         role: role || users[0].role,
+        image_id: imageData,
       };
 
       await userModel.update(id, updatedUser);

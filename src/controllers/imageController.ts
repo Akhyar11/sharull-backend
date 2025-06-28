@@ -12,7 +12,7 @@ export const getImageByFK = async (id: string) => {
 };
 
 export const createImage = async (image_base64: string, FK?: string) => {
-  await imageModel.create({ FK: FK || "", image_base64 });
+  return await imageModel.create({ FK: FK || "", image_base64 });
 };
 
 class ImageController {
