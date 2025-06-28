@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { fleetModel, IFleet } from "../models/fleets";
 import { OrderBy, Where } from "../../firebaseORM/assets/type";
+import { createImage } from "./imageController";
 
 class FleetController {
   async list(req: Request, res: Response): Promise<void> {
@@ -57,7 +58,7 @@ class FleetController {
 
   async store(req: Request, res: Response): Promise<void> {
     try {
-      const { name, type, plate_number, capacity, driver_name, status } =
+      const { name, type, plate_number, capacity, driver_name, status, image } =
         req.body;
 
       if (
@@ -72,6 +73,7 @@ class FleetController {
         return;
       }
 
+      let image_id = "";
       const newFleet: IFleet = {
         name,
         type,
@@ -79,12 +81,18 @@ class FleetController {
         capacity: parseInt(capacity),
         driver_name,
         status,
+        image_id,
       };
 
-      await fleetModel.create(newFleet);
-      res
-        .status(201)
-        .json({ msg: "Fleet created successfully", data: newFleet });
+      const createdFleet = await fleetModel.create(newFleet);
+      if (image) {
+        image_id = await createImage(image as string, createdFleet.id);
+        await fleetModel.update(createdFleet.id, { ...createdFleet, image_id });
+      }
+      res.status(201).json({
+        msg: "Fleet created successfully",
+        data: { ...createdFleet, image_id },
+      });
     } catch (error) {
       res.status(500).json({ msg: "Failed to create fleet" });
     }
@@ -93,7 +101,7 @@ class FleetController {
   async update(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const { name, type, plate_number, capacity, driver_name, status } =
+      const { name, type, plate_number, capacity, driver_name, status, image } =
         req.body;
 
       const fleets = await fleetModel.search("id", "==", id);
@@ -101,6 +109,11 @@ class FleetController {
       if (!fleets[0]) {
         res.status(404).json({ msg: "Fleet not found" });
         return;
+      }
+
+      let image_id = fleets[0].image_id || "";
+      if (image) {
+        image_id = await createImage(image as string, id);
       }
 
       const updatedFleet: IFleet = {
@@ -112,6 +125,7 @@ class FleetController {
           capacity !== undefined ? parseInt(capacity) : fleets[0].capacity,
         driver_name: driver_name || fleets[0].driver_name,
         status: status || fleets[0].status,
+        image_id,
       };
 
       await fleetModel.update(id, updatedFleet);

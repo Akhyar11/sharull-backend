@@ -138,12 +138,20 @@ class PaymentController {
         return;
       }
 
+      let payment_proof_id = "";
+      if (payment_proof) {
+        payment_proof_id = await createImage(
+          payment_proof as string,
+          booking_id
+        );
+      }
+
       const newPayment: IPayment = {
         booking_id,
         payment_method_id,
         payment_date,
         payment_amount: parseFloat(payment_amount),
-        payment_proof,
+        payment_proof: payment_proof_id,
         status: "pending",
         is_approved: false,
       };
@@ -177,6 +185,11 @@ class PaymentController {
         return;
       }
 
+      let payment_proof_id = payment.payment_proof || "";
+      if (payment_proof) {
+        payment_proof_id = await createImage(payment_proof as string, id);
+      }
+
       const updatedPayment: IPayment = {
         ...payment,
         booking_id: booking_id || payment.booking_id,
@@ -186,7 +199,7 @@ class PaymentController {
           payment_amount !== undefined
             ? parseFloat(payment_amount)
             : payment.payment_amount,
-        payment_proof: payment_proof || payment.payment_proof,
+        payment_proof: payment_proof_id,
         status: status || payment.status,
       };
 

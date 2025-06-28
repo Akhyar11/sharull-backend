@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { packageModel, IPackage } from "../models/packages";
 import { OrderBy, Where } from "../../firebaseORM/assets/type";
 import { destinationModel } from "../models/destinations";
+import { createImage } from "./imageController";
 
 class PackageController {
   async list(req: Request, res: Response): Promise<void> {
@@ -75,7 +76,7 @@ class PackageController {
 
   async store(req: Request, res: Response): Promise<void> {
     try {
-      const { name, description, destination_ids, price } = req.body;
+      const { name, description, destination_ids, price, image } = req.body;
 
       if (
         !name ||
@@ -90,19 +91,29 @@ class PackageController {
         return;
       }
 
+      let image_id = "";
       const newPackage: IPackage = {
         name,
         description,
         destination_ids,
         price: parseFloat(price),
+        image_id,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
 
-      await packageModel.create(newPackage);
-      res
-        .status(201)
-        .json({ msg: "Package created successfully", data: newPackage });
+      const createdPackage = await packageModel.create(newPackage);
+      if (image) {
+        image_id = await createImage(image as string, createdPackage.id);
+        await packageModel.update(createdPackage.id, {
+          ...createdPackage,
+          image_id,
+        });
+      }
+      res.status(201).json({
+        msg: "Package created successfully",
+        data: { ...createdPackage, image_id },
+      });
     } catch (error) {
       res.status(500).json({ msg: "Failed to create package" });
     }
@@ -111,13 +122,18 @@ class PackageController {
   async update(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const { name, description, destination_ids, price } = req.body;
+      const { name, description, destination_ids, price, image } = req.body;
 
       const packages = await packageModel.search("id", "==", id);
 
       if (!packages[0]) {
         res.status(404).json({ msg: "Package not found" });
         return;
+      }
+
+      let image_id = packages[0].image_id || "";
+      if (image) {
+        image_id = await createImage(image as string, id);
       }
 
       const updatedPackage: IPackage = {
@@ -129,6 +145,7 @@ class PackageController {
             : packages[0].destination_ids,
         description: description || packages[0].description,
         price: price !== undefined ? parseFloat(price) : packages[0].price,
+        image_id,
         updated_at: new Date().toISOString(),
       };
 
