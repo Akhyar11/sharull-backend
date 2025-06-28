@@ -24,7 +24,7 @@ export const userAuthMiddleware = (
       email: string;
     };
     // Hanya izinkan user atau admin
-    if (decoded.role !== "user" && decoded.role !== "admin") {
+    if (decoded.role !== "customer" && decoded.role !== "admin") {
       res.status(403).json({ msg: "Access denied, user only" });
       return;
     }
