@@ -4,6 +4,58 @@ Dokumen ini menyediakan konteks untuk API yang tersedia bagi pengguna yang diaut
 
 ---
 
+## 0. Autentikasi
+
+### 0.1. Register
+
+- **Deskripsi:** Mendaftarkan pengguna baru ke sistem.
+- **Endpoint:** `/api/auth/register`
+- **Metode:** `POST`
+- **Request:**
+  - **Headers:** `Content-Type: application/json`
+  - **Body:**
+    ```json
+    {
+      "name": "string (required)",
+      "email": "string (required)",
+      "password": "string (required)",
+      "phone": "string (required)"
+    }
+    ```
+- **Response:**
+  - **201 Created:**
+    ```json
+    {
+      "id": "string",
+      "name": "string",
+      "email": "string",
+      "phone": "string",
+      "role": "customer",
+      "created_at": "string",
+      "updated_at": "string"
+    }
+    ```
+  - **400 Bad Request:** Jika ada field yang tidak diisi.
+    ```json
+    {
+      "message": "All fields are required"
+    }
+    ```
+  - **409 Conflict:** Jika email sudah terdaftar.
+    ```json
+    {
+      "message": "User already exists"
+    }
+    ```
+  - **500 Internal Server Error:** Jika terjadi kesalahan server.
+    ```json
+    {
+      "message": "Internal server error"
+    }
+    ```
+
+---
+
 ## 1. Profil Pengguna
 
 ### 1.1. Lihat Profil
