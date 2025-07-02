@@ -418,7 +418,7 @@ class PaymentController {
         payment_date: new Date().toISOString(),
         payment_amount: amount,
         payment_proof: "",
-        status: "pending",
+        status: "waiting_approval",
         is_approved: false,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -442,7 +442,7 @@ class PaymentController {
       // Update booking payment status
       await bookingModel.update(booking_id, {
         ...booking,
-        payment_status: "pending",
+        payment_status: "waiting_approval",
         updated_at: new Date().toISOString(),
       });
 
