@@ -417,7 +417,7 @@ class PaymentController {
         payment_method_id,
         payment_date: new Date().toISOString(),
         payment_amount: amount,
-        payment_proof,
+        payment_proof: "",
         status: "pending",
         is_approved: false,
         created_at: new Date().toISOString(),
@@ -427,9 +427,17 @@ class PaymentController {
       const createdPayment = await paymentModel.create(newPayment);
 
       // Simpan image payment_proof jika ada
+      let payment_proof_id = "";
+
       if (payment_proof) {
-        await createImage(payment_proof, createdPayment.id);
+        const { id } = await createImage(payment_proof, createdPayment.id);
+        payment_proof_id = id;
       }
+
+      await paymentModel.update(createdPayment.id, {
+        ...createdPayment,
+        payment_proof: payment_proof_id,
+      });
 
       // Update booking payment status
       await bookingModel.update(booking_id, {
@@ -443,6 +451,7 @@ class PaymentController {
         data: createdPayment,
       });
     } catch (error) {
+      console.log(error);
       res.status(500).json({ msg: "Failed to create payment", error: error });
     }
   }
