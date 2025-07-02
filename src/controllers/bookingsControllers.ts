@@ -4,6 +4,10 @@ import { OrderBy, Where } from "../../firebaseORM/assets/type";
 import { userModel } from "../models/users";
 import { packageScheduleModel } from "../models/packageSchedules";
 import { packageModel } from "../models/packages";
+import { destinationModel } from "../models/destinations";
+import { fleetModel } from "../models/fleets";
+import { paymentModel } from "../models/payments";
+import { invoiceModel } from "../models/invoices";
 
 class BookingController {
   async list(req: Request, res: Response): Promise<void> {
@@ -223,24 +227,85 @@ class BookingController {
 
       const bookings = await bookingModel.searchWheres(filters, orderByOptions);
 
-      // Get package and schedule details
+      // Get all related data for each booking
       const bookingsWithDetails = await Promise.all(
         bookings.map(async (booking) => {
-          const [package_data] = await packageModel.search(
+          // User
+          const [user] = await userModel.search("id", "==", booking.user_id);
+
+          // Schedule
+          const [schedule] = await packageScheduleModel.search(
             "id",
             "==",
-            booking.package_id
+            booking.package_schedule_id
           );
-          const [schedule_data] = await packageScheduleModel.search(
-            "id",
+
+          // Package & Destinations
+          let packageData = null;
+          let destinations = [];
+          if (schedule && schedule.package_id) {
+            const [pkg] = await packageModel.search(
+              "id",
+              "==",
+              schedule.package_id
+            );
+            packageData = pkg;
+            if (pkg && Array.isArray(pkg.destination_ids)) {
+              destinations = await Promise.all(
+                pkg.destination_ids.map(async (destId: string) => {
+                  const [dest] = await destinationModel.search(
+                    "id",
+                    "==",
+                    destId
+                  );
+                  return dest || null;
+                })
+              );
+            }
+          }
+
+          // Fleet
+          let fleet = null;
+          if (schedule && schedule.fleet_id) {
+            const [flt] = await fleetModel.search(
+              "id",
+              "==",
+              schedule.fleet_id
+            );
+            fleet = flt || null;
+          }
+
+          // Payments
+          const payments = await paymentModel.search(
+            "booking_id",
             "==",
-            booking.schedule_id
+            booking.id
+          );
+
+          // Invoices
+          const invoices = await invoiceModel.search(
+            "booking_id",
+            "==",
+            booking.id
           );
 
           return {
             ...booking,
-            package_data,
-            schedule_data,
+            user: user || null,
+            schedule: schedule
+              ? {
+                  ...schedule,
+                  package: packageData
+                    ? {
+                        ...packageData,
+                        destinations: destinations.filter(Boolean),
+                      }
+                    : null,
+                  fleet: fleet,
+                }
+              : null,
+            payments: payments || [],
+            invoices: invoices || [],
           };
         })
       );
