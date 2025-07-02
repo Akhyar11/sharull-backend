@@ -443,7 +443,7 @@ class PaymentController {
         data: createdPayment,
       });
     } catch (error) {
-      res.status(500).json({ msg: "Failed to create payment" });
+      res.status(500).json({ msg: "Failed to create payment", error: error });
     }
   }
 }
