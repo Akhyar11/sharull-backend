@@ -420,6 +420,8 @@ class PaymentController {
         payment_proof: "",
         status: "waiting_approval",
         is_approved: false,
+        approved_by: "",
+        approved_at: "",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
