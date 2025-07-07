@@ -145,9 +145,13 @@ class DestinationController {
 
       // Handle image jika ada
       const { image } = req.body;
+      let image_id = "";
       if (image) {
-        await createImage(image as string, result.id);
+        const data = await createImage(image as string, result.id);
+        image_id = data.id;
       }
+
+      await destinationModel.update(result.id, { ...newDestination, image_id });
 
       res
         .status(201)
