@@ -21,7 +21,7 @@ class PaymentController {
         booking_id,
         payment_method_id,
         status,
-        orderBy = "payment_date_desc",
+        orderBy = "payment_date.desc",
       } = req.query;
 
       const filters: Where[] = [];
@@ -43,8 +43,8 @@ class PaymentController {
         filters.push({ field: "status", operator: "==", value: status });
 
       const orderByOptions: OrderBy = {
-        field: (orderBy as string).split("_")[0],
-        direction: (orderBy as string).split("_")[1] as "asc" | "desc",
+        field: (orderBy as string).split(".")[0],
+        direction: (orderBy as string).split(".")[1] as "asc" | "desc",
       };
 
       const payments: IPayment[] = await paymentModel.searchWheres(

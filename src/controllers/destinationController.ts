@@ -17,7 +17,7 @@ class DestinationController {
         province,
         country,
         is_active,
-        orderBy = "name_asc",
+        orderBy = "name.asc",
       } = req.query;
 
       const filters: Where[] = [];
@@ -52,8 +52,8 @@ class DestinationController {
       }
 
       const orderByOptions: OrderBy = {
-        field: (orderBy as string).split("_")[0],
-        direction: (orderBy as string).split("_")[1] as "asc" | "desc",
+        field: (orderBy as string).split(".")[0],
+        direction: (orderBy as string).split(".")[1] as "asc" | "desc",
       };
 
       const destinations: IDestination[] = await destinationModel.searchWheres(

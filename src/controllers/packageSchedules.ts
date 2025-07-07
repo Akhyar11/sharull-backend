@@ -18,7 +18,7 @@ class PackageScheduleController {
         package_id,
         fleet_id,
         departure_date,
-        orderBy = "departure_date_asc",
+        orderBy = "departure_date.asc",
       } = req.query;
 
       const filters: Where[] = [];
@@ -40,8 +40,8 @@ class PackageScheduleController {
         });
 
       const orderByOptions: OrderBy = {
-        field: (orderBy as string).split("_")[0],
-        direction: (orderBy as string).split("_")[1] as "asc" | "desc",
+        field: (orderBy as string).split(".")[0],
+        direction: (orderBy as string).split(".")[1] as "asc" | "desc",
       };
 
       const schedules: IPackageSchedule[] =

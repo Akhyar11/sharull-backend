@@ -15,7 +15,7 @@ class InvoiceController {
         booking_id,
         invoice_number,
         status,
-        orderBy = "issued_date_desc",
+        orderBy = "issued_date.desc",
       } = req.query;
 
       const filters: Where[] = [];
@@ -37,8 +37,8 @@ class InvoiceController {
         filters.push({ field: "status", operator: "==", value: status });
 
       const orderByOptions: OrderBy = {
-        field: (orderBy as string).split("_")[0],
-        direction: (orderBy as string).split("_")[1] as "asc" | "desc",
+        field: (orderBy as string).split(".")[0],
+        direction: (orderBy as string).split(".")[1] as "asc" | "desc",
       };
 
       const invoices: IInvoice[] = await invoiceModel.searchWheres(

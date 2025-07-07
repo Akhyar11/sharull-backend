@@ -11,7 +11,7 @@ class PaymentMethodController {
         id,
         type,
         is_active,
-        orderBy = "created_at_desc",
+        orderBy = "created_at.desc",
       } = req.query;
 
       const filters: Where[] = [];
@@ -26,8 +26,8 @@ class PaymentMethodController {
         });
 
       const orderByOptions: OrderBy = {
-        field: (orderBy as string).split("_")[0],
-        direction: (orderBy as string).split("_")[1] as "asc" | "desc",
+        field: (orderBy as string).split(".")[0],
+        direction: (orderBy as string).split(".")[1] as "asc" | "desc",
       };
 
       const items: IPaymentMethod[] = await paymentMethodModel.searchWheres(

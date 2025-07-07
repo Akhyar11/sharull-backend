@@ -13,7 +13,7 @@ class FleetController {
         name,
         type,
         status,
-        orderBy = "name_asc",
+        orderBy = "name.asc",
       } = req.query;
 
       const filters: Where[] = [];
@@ -25,8 +25,8 @@ class FleetController {
         filters.push({ field: "status", operator: "==", value: status });
 
       const orderByOptions: OrderBy = {
-        field: (orderBy as string).split("_")[0],
-        direction: (orderBy as string).split("_")[1] as "asc" | "desc",
+        field: (orderBy as string).split(".")[0],
+        direction: (orderBy as string).split(".")[1] as "asc" | "desc",
       };
 
       const fleets: IFleet[] = await fleetModel.searchWheres(

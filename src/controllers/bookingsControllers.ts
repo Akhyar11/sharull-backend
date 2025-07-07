@@ -19,7 +19,7 @@ class BookingController {
         user_id,
         package_schedule_id,
         payment_status,
-        orderBy = "booking_date_asc",
+        orderBy = "booking_date.asc",
       } = req.query;
 
       const filters: Where[] = [];
@@ -41,8 +41,8 @@ class BookingController {
         });
 
       const orderByOptions: OrderBy = {
-        field: (orderBy as string).split("_")[0],
-        direction: (orderBy as string).split("_")[1] as "asc" | "desc",
+        field: (orderBy as string).split(".")[0],
+        direction: (orderBy as string).split(".")[1] as "asc" | "desc",
       };
 
       const bookings: IBooking[] = await bookingModel.searchWheres(
@@ -103,6 +103,7 @@ class BookingController {
         limit: limitNumber,
       });
     } catch (error) {
+      console.log(error);
       res.status(500).json({ msg: "Failed to fetch bookings" });
     }
   }
