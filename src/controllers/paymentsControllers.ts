@@ -216,16 +216,24 @@ class PaymentController {
         );
 
         if (invoices.length > 0) {
-          if (updatedPayment.status === "approved")
+          if (updatedPayment.status === "approved") {
             await invoiceModel.update(invoices[0].id, {
               ...invoices[0],
               status: "paid",
             });
-          if (updatedPayment.status === "rejected")
+            await bookingModel.update(updatedPayment.booking_id, {
+              payment_status: "paid",
+            });
+          }
+          if (updatedPayment.status === "rejected") {
             await invoiceModel.update(invoices[0].id, {
               ...invoices[0],
               status: "unpaid",
             });
+            await bookingModel.update(updatedPayment.booking_id, {
+              payment_status: "cancelled",
+            });
+          }
         } else {
           await invoiceModel.create({
             booking_id: updatedPayment.id,
@@ -233,6 +241,11 @@ class PaymentController {
             issued_date: "-",
             due_date: "-",
             status: updatedPayment.status === "approved" ? "paid" : "unpaid",
+          });
+
+          await bookingModel.update(updatedPayment.booking_id, {
+            payment_status:
+              updatedPayment.status === "approved" ? "paid" : "cancelled",
           });
         }
       }
