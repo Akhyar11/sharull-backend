@@ -10,6 +10,7 @@ import {
 import { IPackage, packageModel } from "../models/packages";
 import { IPaymentMethod, paymentMethodModel } from "../models/paymentMetode";
 import { createImage } from "./imageController";
+import { invoiceModel } from "../models/invoices";
 
 class PaymentController {
   async list(req: Request, res: Response): Promise<void> {
@@ -203,7 +204,39 @@ class PaymentController {
         status: status || payment.status,
       };
 
-      await paymentModel.update(id, updatedPayment);
+      if (
+        updatedPayment.status === "approved" ||
+        updatedPayment.status === "rejected"
+      ) {
+        await paymentModel.update(id, updatedPayment);
+        const invoices = await invoiceModel.search(
+          "booking_id",
+          "==",
+          updatedPayment.booking_id
+        );
+
+        if (invoices.length > 0) {
+          if (updatedPayment.status === "approved")
+            await invoiceModel.update(invoices[0].id, {
+              ...invoices[0],
+              status: "paid",
+            });
+          if (updatedPayment.status === "rejected")
+            await invoiceModel.update(invoices[0].id, {
+              ...invoices[0],
+              status: "unpaid",
+            });
+        } else {
+          await invoiceModel.create({
+            booking_id: updatedPayment.id,
+            invoice_number: crypto.randomUUID(),
+            issued_date: "-",
+            due_date: "-",
+            status: updatedPayment.status === "approved" ? "paid" : "unpaid",
+          });
+        }
+      }
+
       res
         .status(200)
         .json({ msg: "Payment updated successfully", data: updatedPayment });
