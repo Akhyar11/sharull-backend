@@ -12,6 +12,7 @@ export interface IUser {
   role: "admin" | "customer" | "user";
   reset_token?: string;
   reset_token_expires?: string;
+  gemini_api_key: string;
   created_at?: string;
   updated_at?: string;
   [key: string]: any;
@@ -26,6 +27,7 @@ export const UserSchema: Schema = {
   role: "string",
   reset_token: "string",
   reset_token_expires: "string",
+  gemini_api_key: "string",
   created_at: "string",
   updated_at: "string",
 };

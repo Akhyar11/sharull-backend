@@ -1,8 +1,18 @@
 import { Request, Response } from "express";
 import { packageModel, IPackage } from "../models/packages";
 import { OrderBy, Where } from "../../firebaseORM/assets/type";
-import { destinationModel } from "../models/destinations";
+import { destinationModel, IDestination } from "../models/destinations";
 import { createImage } from "./imageController";
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+import { bookingModel, IBooking } from "../models/bookings";
+import { userModel } from "../models/users";
+import { packageScheduleModel } from "../models/packageSchedules";
+import { useGemini } from "../utils/gemini-ai";
+import { useGroq } from "../utils/groq-ai";
+
+dotenv.config();
+const JWT_SECRET = process.env.JWT_SECRET || "your_secret_key";
 
 class PackageController {
   async list(req: Request, res: Response): Promise<void> {
@@ -180,6 +190,94 @@ class PackageController {
     try {
       const { page, limit, search, orderBy = "name_asc" } = req.query;
 
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        res.status(401).json({ msg: "No token provided" });
+        return;
+      }
+
+      const token = authHeader.split(" ")[1];
+      const decoded = jwt.verify(token, JWT_SECRET) as {
+        id: string;
+        role: string;
+        email: string;
+      };
+
+      let AIRecomendation: {
+        category: string;
+        provensi: string;
+        city: string;
+      } | null = null;
+
+      if (decoded.role === "customer" || decoded.role === "user") {
+        const bookings: IBooking[] = await bookingModel.searchWheres(
+          [{ field: "user_id", operator: "==", value: decoded.id }],
+          {
+            field: "booking_date",
+            direction: "asc",
+          }
+        );
+
+        const pageNumber = 1;
+        const limitNumber = 10;
+        const startIndex = (pageNumber - 1) * limitNumber;
+        const endIndex = startIndex + limitNumber;
+        const paginatedBookings = bookings.slice(startIndex, endIndex);
+
+        const data = paginatedBookings.map((booking, index) => ({
+          no: index + 1 + startIndex,
+          ...booking,
+        }));
+
+        const dataRelation = [];
+        const user = await userModel.search("id", "==", decoded.id);
+
+        for (let d of data) {
+          const scheduleResults = await packageScheduleModel.search(
+            "id",
+            "==",
+            d.package_schedule_id
+          );
+
+          let scheduleWithPackage = null;
+
+          if (scheduleResults && scheduleResults.length > 0) {
+            const pkg = await packageModel.search(
+              "id",
+              "==",
+              scheduleResults[0].package_id
+            );
+
+            let destinations = [];
+
+            for (let d of pkg[0].destination_ids) {
+              const des = await destinationModel.search("id", "==", d);
+              destinations.push(des[0]);
+            }
+
+            const newPackage = {
+              ...pkg[0],
+              destinations,
+            };
+
+            scheduleWithPackage = {
+              ...scheduleResults[0],
+              package: newPackage,
+            };
+          }
+
+          const newData = {
+            ...d,
+            user: user && user.length > 0 ? user[0] : null,
+            schedule: scheduleWithPackage,
+          };
+
+          dataRelation.push(newData);
+        }
+
+        AIRecomendation = await useGroq(dataRelation);
+      }
+
       const filters: Where[] = [];
 
       if (search) {
@@ -191,11 +289,15 @@ class PackageController {
         direction: (orderBy as string).split("_")[1] as "asc" | "desc",
       };
 
-      const packages = await packageModel.searchWheres(filters, orderByOptions);
+      // Get all packages first
+      const allPackages = await packageModel.searchWheres(
+        filters,
+        orderByOptions
+      );
 
       // Get destinations for each package
       const packagesWithDestinations = await Promise.all(
-        packages.map(async (pkg) => {
+        allPackages.map(async (pkg) => {
           const destinations = await Promise.all(
             pkg.destination_ids.map(async (destId: string) => {
               const dest = await destinationModel.search("id", "==", destId);
@@ -209,21 +311,66 @@ class PackageController {
         })
       );
 
-      // Apply pagination
+      let finalPackages = [];
+
+      if (AIRecomendation) {
+        // Query 1: Packages yang match dengan AI Recommendation
+        const recommendedPackages = packagesWithDestinations.filter((pkg) => {
+          return pkg.destinations.some(
+            (destination: IDestination) =>
+              destination.city === AIRecomendation.city ||
+              destination.province === AIRecomendation.provensi ||
+              destination.category === AIRecomendation.category
+          );
+        });
+
+        // Query 2: Packages yang tidak match dengan AI Recommendation
+        const otherPackages = packagesWithDestinations.filter((pkg) => {
+          return !pkg.destinations.some(
+            (destination: IDestination) =>
+              destination.city === AIRecomendation.city ||
+              destination.province === AIRecomendation.provensi ||
+              destination.category === AIRecomendation.category
+          );
+        });
+
+        // Gabungkan: recommended packages di awal, diikuti other packages
+        // Pastikan tidak ada duplikasi ID
+        const usedIds = new Set();
+
+        // Tambahkan recommended packages terlebih dahulu
+        recommendedPackages.forEach((pkg) => {
+          if (!usedIds.has(pkg.id)) {
+            finalPackages.push(pkg);
+            usedIds.add(pkg.id);
+          }
+        });
+
+        // Tambahkan other packages
+        otherPackages.forEach((pkg) => {
+          if (!usedIds.has(pkg.id)) {
+            finalPackages.push(pkg);
+            usedIds.add(pkg.id);
+          }
+        });
+      } else {
+        // Jika tidak ada AI Recommendation, gunakan packages biasa
+        finalPackages = packagesWithDestinations;
+      }
+
+      // Apply pagination pada final packages
       const pageNumber = parseInt(page as string) || 1;
       const limitNumber = parseInt(limit as string) || 10;
       const startIndex = (pageNumber - 1) * limitNumber;
       const endIndex = startIndex + limitNumber;
-      const paginatedPackages = packagesWithDestinations.slice(
-        startIndex,
-        endIndex
-      );
+      const paginatedPackages = finalPackages.slice(startIndex, endIndex);
 
       res.status(200).json({
         list: paginatedPackages,
-        total: packages.length,
+        total: finalPackages.length,
         page: pageNumber,
         limit: limitNumber,
+        aiRecommendation: AIRecomendation, // Optional: untuk debugging
       });
     } catch (error) {
       res.status(500).json({ msg: "Failed to fetch packages" });
