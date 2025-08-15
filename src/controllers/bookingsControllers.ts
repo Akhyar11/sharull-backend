@@ -244,7 +244,7 @@ class BookingController {
       ];
 
       const orderByOptions: OrderBy = {
-        field: (orderBy as string).split("_")[0],
+        field: (orderBy as string).split(".")[0],
         direction: (orderBy as string).split(".")[1] as "asc" | "desc",
       };
 
