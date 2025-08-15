@@ -57,6 +57,7 @@ class Route {
 
     // Bookings
     userRouter.get("/bookings", bookingController.listForUser);
+    userRouter.get("/bookings/list", bookingController.list);
     userRouter.get("/bookings/:id", bookingController.detailForUser);
     userRouter.post("/bookings", bookingController.createForUser);
 
@@ -64,6 +65,7 @@ class Route {
     userRouter.get("/payment-methods", paymentMethodController.listForUser);
 
     // Payments
+    userRouter.get("/payments/list", paymentController.list);
     userRouter.get("/payments", paymentController.listForUser);
     userRouter.get("/payments/:id", paymentController.detailForUser);
     userRouter.post("/payments", paymentController.createForUser);
