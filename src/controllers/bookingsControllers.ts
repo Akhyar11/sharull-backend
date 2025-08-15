@@ -8,6 +8,12 @@ import { destinationModel } from "../models/destinations";
 import { fleetModel } from "../models/fleets";
 import { paymentModel } from "../models/payments";
 import { invoiceModel } from "../models/invoices";
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+const JWT_SECRET = process.env.JWT_SECRET || "your_secret_key"; // Sama kayak di AuthController
 
 class BookingController {
   async list(req: Request, res: Response): Promise<void> {
@@ -214,7 +220,23 @@ class BookingController {
 
   async listForUser(req: Request, res: Response) {
     try {
-      const userId = (req as any).user?.id;
+      const authHeader = req.headers.authorization;
+
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        res.status(401).json({ msg: "No token provided" });
+        return;
+      }
+
+      const token = authHeader.split(" ")[1];
+
+      const decoded = jwt.verify(token, JWT_SECRET) as {
+        id: string;
+        role: string;
+        email: string;
+      };
+
+      const userId = decoded.id;
+
       const { page, limit, orderBy = "created_at_desc" } = req.query;
 
       const filters: Where[] = [
