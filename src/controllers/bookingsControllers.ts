@@ -348,6 +348,7 @@ class BookingController {
       });
     } catch (error) {
       res.status(500).json({ msg: "Failed to fetch bookings" });
+      console.log(error);
     }
   }
 
