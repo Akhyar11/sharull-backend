@@ -237,7 +237,7 @@ class BookingController {
 
       const userId = decoded.id;
 
-      const { page, limit, orderBy = "created_at_desc" } = req.query;
+      const { page, limit, orderBy = "created_at.desc" } = req.query;
 
       const filters: Where[] = [
         { field: "user_id", operator: "==", value: userId },
@@ -245,7 +245,7 @@ class BookingController {
 
       const orderByOptions: OrderBy = {
         field: (orderBy as string).split("_")[0],
-        direction: (orderBy as string).split("_")[1] as "asc" | "desc",
+        direction: (orderBy as string).split(".")[1] as "asc" | "desc",
       };
 
       const bookings = await bookingModel.searchWheres(filters, orderByOptions);
