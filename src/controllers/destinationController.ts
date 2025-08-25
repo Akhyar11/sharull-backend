@@ -148,6 +148,7 @@ class DestinationController {
       let image_id = "";
       if (image) {
         const data = await createImage(image as string, result.id);
+        console.log(data);
         image_id = data.id;
       }
 
