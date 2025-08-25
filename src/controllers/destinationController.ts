@@ -200,8 +200,11 @@ class DestinationController {
 
       // Handle image jika ada
       const { image } = req.body;
+      let image_id = "";
       if (image) {
-        await createImage(image as string, id);
+        const data = await createImage(image as string, id);
+        console.log(data);
+        image_id = data.id;
       }
 
       const updatedDestination: IDestination = {
@@ -223,6 +226,7 @@ class DestinationController {
           is_active !== undefined
             ? Boolean(is_active)
             : destinations[0].is_active,
+        image_id: image_id || destinations[0].image_id,
       };
 
       await destinationModel.update(id, updatedDestination);
