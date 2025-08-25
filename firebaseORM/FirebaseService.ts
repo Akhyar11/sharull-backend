@@ -107,17 +107,13 @@ class FirebaseAdminService {
   }
 
   private async readFromFirestore(): Promise<any[]> {
-    if (this.cachedData.length === 0) {
-      const querySnapshot = await this.db.collection(this.collectionName).get();
-      const data: any[] = [];
-      querySnapshot.forEach((doc) => {
-        data.push({ id: doc.id, ...doc.data() });
-      });
-      this.cachedData = data;
-      return data;
-    }
-
-    return this.cachedData;
+    const querySnapshot = await this.db.collection(this.collectionName).get();
+    const data: any[] = [];
+    querySnapshot.forEach((doc) => {
+      data.push({ id: doc.id, ...doc.data() });
+    });
+    this.cachedData = data;
+    return data;
   }
 
   private async writeToFirestore(
