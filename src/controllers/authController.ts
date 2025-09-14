@@ -41,7 +41,7 @@ export const authController = {
 
       res.status(201).json(userWithoutPassword);
     } catch (error) {
-      console.log(error)
+      console.log(error);
       if ((error as FirebaseError).code) {
         res.status(500).json({ message: (error as FirebaseError).message });
         return;
