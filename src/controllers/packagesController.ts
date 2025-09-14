@@ -49,7 +49,7 @@ class PackageController {
       );
 
       const pageNumber = parseInt(page as string) || 1;
-      const limitNumber = parseInt(limit as string) || 10;
+      const limitNumber = 100;
       const startIndex = (pageNumber - 1) * limitNumber;
       const endIndex = startIndex + limitNumber;
       const paginatedPackages = packages.slice(startIndex, endIndex);
@@ -360,7 +360,7 @@ class PackageController {
 
       // Apply pagination pada final packages
       const pageNumber = parseInt(page as string) || 1;
-      const limitNumber = parseInt(limit as string) || 10;
+      const limitNumber = 100;
       const startIndex = (pageNumber - 1) * limitNumber;
       const endIndex = startIndex + limitNumber;
       const paginatedPackages = finalPackages.slice(startIndex, endIndex);

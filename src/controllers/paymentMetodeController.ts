@@ -36,7 +36,7 @@ class PaymentMethodController {
       );
 
       const pageNumber = parseInt(page as string) || 1;
-      const limitNumber = parseInt(limit as string) || 10;
+      const limitNumber = 100;
       const startIndex = (pageNumber - 1) * limitNumber;
       const endIndex = startIndex + limitNumber;
       const paginatedItems = items.slice(startIndex, endIndex);

@@ -48,7 +48,7 @@ class PackageScheduleController {
         await packageScheduleModel.searchWheres(filters, orderByOptions);
 
       const pageNumber = parseInt(page as string) || 1;
-      const limitNumber = parseInt(limit as string) || 10;
+      const limitNumber = 100;
       const startIndex = (pageNumber - 1) * limitNumber;
       const endIndex = startIndex + limitNumber;
       const paginatedSchedules = schedules.slice(startIndex, endIndex);
@@ -244,7 +244,7 @@ class PackageScheduleController {
 
       // Apply pagination
       const pageNumber = parseInt(page as string) || 1;
-      const limitNumber = parseInt(limit as string) || 10;
+      const limitNumber = 100;
       const startIndex = (pageNumber - 1) * limitNumber;
       const endIndex = startIndex + limitNumber;
       const paginatedSchedules = schedulesWithDetails.slice(

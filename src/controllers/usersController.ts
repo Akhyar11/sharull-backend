@@ -51,7 +51,7 @@ class UserController {
 
       // Apply pagination logic
       const pageNumber = parseInt(page as string) || 1;
-      const limitNumber = parseInt(limit as string) || 10;
+      const limitNumber = 100;
 
       const startIndex = (pageNumber - 1) * limitNumber;
       const endIndex = startIndex + limitNumber;
@@ -107,7 +107,7 @@ class UserController {
         password: bcrypt.hashSync(password, 10),
         phone,
         role,
-        gemini_api_key: "",
+        // gemini_api_key: "",
       };
 
       await userModel.create(newUser);
@@ -283,7 +283,7 @@ class UserController {
         phone,
         role: "user",
         image_id: "",
-        gemini_api_key: "",
+        // gemini_api_key: "",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };

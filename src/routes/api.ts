@@ -80,7 +80,7 @@ class Route {
     // Users
     adminRouter.get("/users/list", userController.list);
     adminRouter.post("/users", userController.store);
-    adminRouter.put("/users/:id", userController.update);
+    adminRouter.patch("/users/:id", userController.update);
     adminRouter.delete("/users/:id", userController.delete);
 
     // Destination
